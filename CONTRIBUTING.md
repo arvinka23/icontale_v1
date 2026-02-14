@@ -77,6 +77,23 @@ Use clear, descriptive commit messages:
 - `docs: update Socket.io API documentation`
 - `refactor: extract timer logic into separate module`
 
+## Code Review Checklist
+
+Before approving a pull request, reviewers should verify:
+
+- [ ] **Tests pass** — `npm test` exits with 0.
+- [ ] **No lint errors** — `npm run lint` is clean.
+- [ ] **Input validation** — All user inputs go through `lib/sanitize.js`.
+- [ ] **Word filter** — Usernames and stories are checked via `lib/wordfilter.js`.
+- [ ] **Error handling** — Socket event handlers are wrapped in try/catch.
+- [ ] **No hardcoded secrets** — Environment variables in `.env.example` if needed.
+- [ ] **JSDoc types** — New functions and parameters have `@param` / `@returns` tags.
+- [ ] **English comments** — All code comments are in English; UI strings may be German.
+- [ ] **Consistent naming** — camelCase for variables/functions, PascalCase for types.
+- [ ] **No dead code** — Unused functions, variables, and CSS classes are removed.
+- [ ] **Memory safety** — Timers and intervals are cleaned up on phase transitions.
+- [ ] **Rate limits** — New socket events respect the per-socket rate limiter.
+
 ## Reporting Issues
 
 When reporting a bug, please include:
