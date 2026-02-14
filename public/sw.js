@@ -2,12 +2,18 @@
 //  IconTale — Service Worker (PWA Shell Cache)
 // ═══════════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'icontale-v1';
+const CACHE_NAME = 'icontale-v2';
 const SHELL_ASSETS = [
     '/',
     '/index.html',
     '/styles.css',
-    '/script.js',
+    '/js/main.js',
+    '/js/constants.js',
+    '/js/state.js',
+    '/js/dom.js',
+    '/js/ui.js',
+    '/js/sounds.js',
+    '/js/socket-handlers.js',
     '/manifest.json',
     '/favicon.ico',
 ];

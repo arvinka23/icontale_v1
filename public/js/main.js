@@ -1,0 +1,144 @@
+// ═══════════════════════════════════════════════════════════════
+//  IconTale — Main Entry Point (ES Module)
+// ═══════════════════════════════════════════════════════════════
+
+import { state } from './state.js';
+import { dom, showError, countWords } from './dom.js';
+import {
+    loadUserEmoji, randomizeEmoji, setTab, initSettingsUI,
+    gatherSettings, showTutorial, hideTutorial,
+} from './ui.js';
+import { loadSoundPreference, toggleSound, playClick } from './sounds.js';
+import { registerSocketHandlers } from './socket-handlers.js';
+
+// ── Socket.io (loaded globally via <script> tag) ────────────
+const socket = window.io({
+    reconnection: true,
+    reconnectionAttempts: 10,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+});
+
+// Register all socket event handlers
+registerSocketHandlers(socket);
+
+// ── Settings Emit ───────────────────────────────────────────
+function emitSettings() {
+    if (!state.roomCode || !state.isHost) return;
+    const settings = gatherSettings();
+    socket.emit('update-settings', { roomCode: state.roomCode, settings });
+}
+
+// ── Event Bindings ──────────────────────────────────────────
+
+// Emoji selection
+dom.changeEmoji.onclick = () => randomizeEmoji();
+
+// Tab switching
+dom.tabCreate.onclick = () => { setTab('create'); playClick(); };
+dom.tabJoin.onclick   = () => { setTab('join');   playClick(); };
+
+// Tutorial
+dom.tutorialClose.onclick = hideTutorial;
+dom.tutorialStart.onclick = hideTutorial;
+dom.helpBtn.onclick = showTutorial;
+
+// Word count (writing phase)
+dom.writingStory.addEventListener('input', () => {
+    const words = countWords(dom.writingStory.value);
+    dom.wordCount.textContent = words;
+    const limit = parseInt(dom.wordLimit.textContent) || 500;
+    dom.wordCount.classList.toggle('over-limit', words > limit);
+});
+
+// Submit / Edit story toggle
+dom.writingFinishBtn.onclick = () => {
+    if (!state.storySubmitted) {
+        const story = dom.writingStory.value.trim();
+        if (!story) return showError('Bitte schreibe eine Geschichte.');
+        const words = countWords(story);
+        const limit = parseInt(dom.wordLimit.textContent) || 500;
+        if (words > limit) return showError(`Max ${limit} Wörter erlaubt (aktuell: ${words}).`);
+
+        socket.emit('submit-story', { roomCode: state.roomCode, story });
+        state.storySubmitted = true;
+        dom.writingStory.disabled = true;
+        dom.writingSection.classList.add('writing-finished');
+        dom.writingFinishBtn.innerHTML = '<span class="btn-icon">✏️</span> Bearbeiten';
+        playClick();
+    } else {
+        state.storySubmitted = false;
+        dom.writingStory.disabled = false;
+        dom.writingSection.classList.remove('writing-finished');
+        dom.writingFinishBtn.innerHTML = '<span class="btn-icon">✅</span> Abschicken';
+    }
+};
+
+// Results continue
+dom.resultsContinueBtn.onclick = () => {
+    socket.emit('results-continue', { roomCode: state.roomCode });
+};
+
+// Round/game buttons
+dom.nextRoundBtn.onclick = () => {
+    socket.emit('next-round', { roomCode: state.roomCode });
+};
+
+dom.newGameBtn.onclick = () => {
+    socket.emit('new-game', { roomCode: state.roomCode });
+};
+
+dom.gameoverNewGameBtn.onclick = () => {
+    socket.emit('new-game', { roomCode: state.roomCode });
+};
+
+// Menu action (create / join)
+dom.menuActionBtn.onclick = () => {
+    const username = dom.username.value.trim();
+    const userEmoji = localStorage.getItem('icontale_user_emoji') || '😀';
+
+    if (!username) return showError('Bitte gib einen Namen ein.');
+
+    if (dom.tabCreate.classList.contains('active')) {
+        socket.emit('create-lobby', { username, emoji: userEmoji });
+    } else {
+        const roomCode = dom.roomCodeInput.value.trim().toUpperCase();
+        if (roomCode.length !== 6) return showError('Bitte gib einen gültigen 6-stelligen Code ein.');
+        socket.emit('join-lobby', { username, roomCode, emoji: userEmoji });
+    }
+    playClick();
+};
+
+dom.spectatorBtn.onclick = () => {
+    const roomCode = dom.roomCodeInput.value.trim().toUpperCase();
+    if (roomCode.length !== 6) return showError('Bitte gib einen gültigen 6-stelligen Code ein.');
+    socket.emit('join-spectator', { roomCode });
+};
+
+dom.startGame.onclick = () => {
+    if (state.roomCode && state.isHost) {
+        socket.emit('start-game', { roomCode: state.roomCode });
+        playClick();
+    }
+};
+
+// Keyboard: Enter to submit in menu
+dom.username.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') dom.menuActionBtn.click();
+});
+dom.roomCodeInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') dom.menuActionBtn.click();
+});
+
+// ── Initialization ──────────────────────────────────────────
+loadUserEmoji();
+loadSoundPreference();
+setTab('create');
+initSettingsUI(emitSettings);
+
+// Show tutorial on first visit
+if (!localStorage.getItem('icontale_tutorial_seen')) {
+    showTutorial();
+}
+
+console.info('[IconTale] Client initialized (ES Modules)');
