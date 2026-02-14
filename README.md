@@ -1,6 +1,18 @@
 # IconTale
 
-A real-time multiplayer storytelling game built with Node.js, Express, and Socket.io. Players receive random emoji combinations, write creative stories inspired by them, then try to guess which emojis inspired each other's stories.
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-v4-000000?logo=express&logoColor=white)](https://expressjs.com/)
+[![Socket.io](https://img.shields.io/badge/Socket.io-v4-010101?logo=socket.io&logoColor=white)](https://socket.io/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/arvinka23/icontale_v1/actions/workflows/ci.yml/badge.svg)](https://github.com/arvinka23/icontale_v1/actions)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](#docker)
+
+> A real-time multiplayer storytelling game where players write creative stories inspired by emoji combinations, then try to guess each other's emojis and identities.
+
+<!-- Replace with an actual screenshot or GIF of gameplay -->
+![IconTale Preview](public/og-image.png)
+
+---
 
 ## Table of Contents
 
@@ -10,10 +22,17 @@ A real-time multiplayer storytelling game built with Node.js, Express, and Socke
 - [How to Play](#how-to-play)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
+- [Docker](#docker)
 - [Project Structure](#project-structure)
+- [Socket.io API](#socketio-api)
+- [Testing](#testing)
 - [Deployment](#deployment)
+- [Contributing](#contributing)
+- [Changelog](#changelog)
 - [Known Limitations](#known-limitations)
 - [License](#license)
+
+---
 
 ## Overview
 
@@ -25,7 +44,7 @@ IconTale is a browser-based party game designed for 3–20 players. Each round f
 
 Games can run as single rounds or as multi-round matches (Best of 3 / Best of 5).
 
-### Scoring
+### Scoring (Classic Mode)
 
 | Action | Points |
 |---|---|
@@ -38,6 +57,8 @@ Games can run as single rounds or as multi-round matches (Best of 3 / Best of 5)
 
 Blind mode uses a separate scoring system focused only on author guessing.
 
+---
+
 ## Game Modes
 
 | Mode | Description |
@@ -46,6 +67,8 @@ Blind mode uses a separate scoring system focused only on author guessing.
 | **Speed** | 60-second timer, max 100 words — fast and intense. |
 | **Blind** | No emoji options when guessing — only guess the author. |
 | **Team** | Players are randomly split into two teams. Team scores are combined. |
+
+---
 
 ## Configurable Settings
 
@@ -62,6 +85,8 @@ The lobby host can configure the following before starting:
 
 Non-host players see the current settings as read-only chips.
 
+---
+
 ## How to Play
 
 1. Open the app in your browser.
@@ -75,27 +100,52 @@ Non-host players see the current settings as read-only chips.
 
 A built-in **tutorial** is shown on first visit and can be reopened via the **?** button at any time.
 
+---
+
 ## Tech Stack
 
-- **Backend:** Node.js, Express, Socket.io
-- **Frontend:** Vanilla HTML5, CSS3, JavaScript (ES6+)
-- **Real-time Communication:** WebSockets via Socket.io
-- **State Management:** In-memory (server-side)
+| Layer | Technology |
+|---|---|
+| **Runtime** | Node.js >= 18 |
+| **Backend** | Express v4, Socket.io v4 |
+| **Frontend** | Vanilla HTML5, CSS3, ES Modules |
+| **Security** | Helmet, express-rate-limit, input sanitization |
+| **Logging** | Pino (structured JSON logging) |
+| **Testing** | Vitest |
+| **Linting** | ESLint (flat config) + Prettier |
+| **CI/CD** | GitHub Actions |
+| **Container** | Docker + docker-compose |
+| **PWA** | Service Worker, Web App Manifest |
+
+---
 
 ## Getting Started
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) v14 or higher
+- [Node.js](https://nodejs.org/) v18 or higher
 - npm (included with Node.js)
 
 ### Installation
 
 ```bash
-git clone https://github.com/arvinka23/icontale.git
-cd icontale
+git clone https://github.com/arvinka23/icontale_v1.git
+cd icontale_v1
 npm install
 ```
+
+### Environment Configuration
+
+```bash
+cp .env.example .env
+# Edit .env as needed
+```
+
+| Variable | Default | Description |
+|---|---|---|
+| `PORT` | `3000` | Server port |
+| `NODE_ENV` | `development` | `development` or `production` |
+| `LOG_LEVEL` | `debug` | Pino log level |
 
 ### Run in Development
 
@@ -108,38 +158,166 @@ Uses [nodemon](https://nodemon.io/) for automatic restarts on file changes.
 ### Run in Production
 
 ```bash
-npm start
+NODE_ENV=production npm start
 ```
 
-The server starts on `http://localhost:3000` by default. Set the `PORT` environment variable to use a different port:
+### Available Scripts
+
+| Script | Description |
+|---|---|
+| `npm start` | Start the server |
+| `npm run dev` | Start with auto-reload (nodemon) |
+| `npm test` | Run all tests (Vitest) |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run lint` | Lint with ESLint |
+| `npm run format` | Format with Prettier |
+| `npm run build:css` | Minify CSS for production |
+| `npm run audit` | Security audit |
+
+---
+
+## Docker
+
+### Build and run
 
 ```bash
-PORT=8080 npm start
+docker build -t icontale .
+docker run -p 3000:3000 icontale
 ```
+
+### Using docker-compose
+
+```bash
+docker-compose up -d
+```
+
+The container includes a health check at `/health`.
+
+---
 
 ## Project Structure
 
 ```
-icontale/
-├── server.js              # Express + Socket.io server, game logic
-├── package.json           # Dependencies and scripts
-├── Procfile               # Heroku deployment config
-├── railway.json           # Railway deployment config
-├── render.yaml            # Render deployment config
-├── .gitignore
-└── public/
-    ├── index.html         # Game UI (single-page application)
-    ├── script.js          # Client-side game logic and Socket.io client
-    ├── styles.css         # Styling, animations, responsive design
-    ├── favicon.ico        # Browser tab icon
-    ├── manifest.json      # PWA manifest
-    ├── robots.txt         # Search engine crawling rules
-    └── sitemap.xml        # XML sitemap
+icontale_v1/
+├── server.js                  # Express + Socket.io server, game logic
+├── lib/
+│   ├── logger.js              # Pino structured logging
+│   ├── sanitize.js            # Input validation & XSS protection
+│   └── scoring.js             # Scoring logic for all game modes
+├── public/
+│   ├── index.html             # Single-page application
+│   ├── styles.css             # OKLCH design system, responsive
+│   ├── sw.js                  # Service Worker (PWA caching)
+│   ├── manifest.json          # PWA manifest
+│   ├── favicon.ico            # Browser tab icon
+│   ├── icon-192.svg           # PWA icon 192x192
+│   ├── icon-512.svg           # PWA icon 512x512
+│   ├── icon-maskable.svg      # PWA maskable icon
+│   ├── og-image.png           # Open Graph preview image
+│   ├── robots.txt             # Crawling rules
+│   ├── sitemap.xml            # XML sitemap
+│   └── js/
+│       ├── main.js            # Entry point, event bindings
+│       ├── constants.js       # Emojis, mode descriptions
+│       ├── state.js           # Finite state machine
+│       ├── dom.js             # DOM references & utilities
+│       ├── ui.js              # UI rendering for all phases
+│       ├── sounds.js          # Optional WebAudio effects
+│       └── socket-handlers.js # Socket.io event handlers
+├── __tests__/
+│   ├── sanitize.test.js       # Input validation tests
+│   └── scoring.test.js        # Scoring logic tests
+├── .github/workflows/
+│   └── ci.yml                 # GitHub Actions CI pipeline
+├── Dockerfile                 # Production container
+├── docker-compose.yml         # Container orchestration
+├── .env.example               # Environment template
+├── eslint.config.js           # ESLint flat config
+├── .prettierrc                # Prettier config
+├── vitest.config.js           # Test runner config
+├── Procfile                   # Heroku deployment
+├── railway.json               # Railway deployment
+├── render.yaml                # Render deployment
+├── CONTRIBUTING.md            # Contribution guidelines
+├── CHANGELOG.md               # Version history
+└── package.json
 ```
+
+---
+
+## Socket.io API
+
+Full documentation of all real-time events between client and server.
+
+### Client → Server
+
+| Event | Payload | Description |
+|---|---|---|
+| `create-lobby` | `{ username, emoji, settings }` | Create a new lobby |
+| `join-lobby` | `{ username, roomCode, emoji }` | Join an existing lobby |
+| `join-spectator` | `{ roomCode }` | Join as spectator |
+| `update-settings` | `{ roomCode, settings }` | Host updates game settings |
+| `start-game` | `{ roomCode }` | Host starts the game |
+| `submit-story` | `{ roomCode, story }` | Submit a written story |
+| `submit-guess` | `{ roomCode, guess }` | Submit emoji + author guess |
+| `results-continue` | `{ roomCode }` | Host advances results |
+| `leaderboard-phase` | `{ roomCode }` | Host shows leaderboard |
+| `next-round` | `{ roomCode }` | Host starts next round |
+| `new-game` | `{ roomCode }` | Host returns to lobby |
+| `reconnect-session` | `{ sessionToken, roomCode }` | Reconnect after disconnect |
+
+### Server → Client
+
+| Event | Payload | Description |
+|---|---|---|
+| `lobby-created` | `{ roomCode, players, settings }` | Lobby was created |
+| `lobby-joined` | `{ roomCode, players, settings }` | Successfully joined lobby |
+| `lobby-error` | `{ message }` | Error (full lobby, bad code, etc.) |
+| `lobby-closed` | `{ reason }` | Lobby was closed |
+| `players-update` | `Player[]` | Player list changed |
+| `settings-update` | `Settings` | Settings changed by host |
+| `spectators-update` | `number` | Spectator count changed |
+| `spectator-joined` | `{ roomCode, players, settings, started, ... }` | Spectator joined |
+| `host-changed` | `{ newHost, newHostId }` | Host was reassigned |
+| `player-disconnected` | `{ name }` | Player disconnected |
+| `player-reconnected` | `{ name }` | Player reconnected |
+| `teams-assigned` | `{ teams }` | Teams were assigned (Team mode) |
+| `game-started` | `{ settings }` | Game has started |
+| `round-started` | `{ emojis, timer, wordLimit, round, totalRounds }` | New round began |
+| `writing-progress` | `{ submitted, total }` | Stories submission progress |
+| `guess-phase` | `{ story, emojiOptions, playerOptions, ... }` | Guessing phase data |
+| `guessing-progress` | `{ submitted, total }` | Guess submission progress |
+| `results-phase` | `{ results }` | Results are ready |
+| `results-progress` | `{ currentIndex }` | Host advancing results |
+| `leaderboard-phase` | `{ leaderboard, leaderboardDetails }` | Leaderboard data |
+| `game-over` | `{ leaderboard, leaderboardDetails, teamScores }` | Game ended (multi-round) |
+| `back-to-lobby` | `{ players, settings }` | Returned to lobby |
+| `story-error` | `{ message }` | Story validation failed |
+| `reconnect-success` | `{ roomCode, playerName, ... }` | Reconnection succeeded |
+| `reconnect-failed` | `{ reason }` | Reconnection failed |
+| `server-shutdown` | — | Server is shutting down |
+
+---
+
+## Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run in watch mode
+npm run test:watch
+```
+
+Tests cover:
+- **Input Sanitization** — HTML escaping, username/story/room code validation
+- **Scoring Logic** — Classic & blind mode scoring, team score calculation
+
+---
 
 ## Deployment
 
-Deployment configurations are included for three platforms:
+Deployment configurations are included for multiple platforms:
 
 ### Heroku
 
@@ -156,13 +334,33 @@ Connect the GitHub repository on [Railway](https://railway.app/). The `railway.j
 
 Connect the GitHub repository on [Render](https://render.com/). The `render.yaml` defines the web service.
 
+### Docker (Self-hosted)
+
+```bash
+docker-compose up -d
+```
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
+
+---
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for the full version history.
+
+---
+
 ## Known Limitations
 
-- **No persistence:** All game state is stored in memory. Restarting the server clears all active lobbies. Abandoned lobbies are automatically cleaned up after 30 minutes.
-- **No reconnection:** If a player disconnects, they cannot rejoin the same game session.
-- **No input sanitization:** User-generated content (stories, usernames) is not sanitized against XSS.
-- **No authentication:** There is no user account system or session management.
-- **Single instance only:** The in-memory architecture does not support horizontal scaling.
+- **No persistence:** All game state is stored in memory. Restarting the server clears all active lobbies. Inactive lobbies are cleaned up after 30 minutes.
+- **Single instance only:** The in-memory architecture does not support horizontal scaling without a shared store (e.g. Redis).
+- **No authentication:** There is no user account system. Players are identified by session tokens during a single game.
+
+---
 
 ## License
 

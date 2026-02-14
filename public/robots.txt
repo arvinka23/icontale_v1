@@ -1,8 +1,9 @@
 User-agent: *
 Allow: /
+Disallow: /socket.io/
 
 # Sitemap
-Sitemap: https://arvinka23.github.io/icontale/sitemap.xml
+Sitemap: https://icontale.onrender.com/sitemap.xml
 
 # Crawl-delay
 Crawl-delay: 1
