@@ -2,6 +2,8 @@
 //  IconTale — Server
 // ═══════════════════════════════════════════════════════════════
 
+require('dotenv').config();
+
 const express  = require('express');
 const http     = require('http');
 const helmet   = require('helmet');
@@ -11,6 +13,17 @@ const { Server } = require('socket.io');
 const log = require('./lib/logger');
 const san = require('./lib/sanitize');
 const { processRoundResults, calculateTeamScores } = require('./lib/scoring');
+
+// ── Environment validation ──────────────────────────────────
+const PORT = parseInt(process.env.PORT, 10) || 3000;
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
+if (isNaN(PORT) || PORT < 1 || PORT > 65535) {
+    log.fatal({ port: process.env.PORT }, 'Invalid PORT — must be 1-65535');
+    process.exit(1);
+}
+
+log.info({ NODE_ENV, PORT }, 'Environment validated');
 
 // ── Express setup ───────────────────────────────────────────
 const app    = express();
@@ -912,7 +925,6 @@ process.on('unhandledRejection', (reason) => {
 });
 
 // ── Start server ────────────────────────────────────────────
-const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    log.info({ port: PORT, env: process.env.NODE_ENV || 'development' }, 'IconTale server running');
+    log.info({ port: PORT, env: NODE_ENV }, 'IconTale server running');
 });

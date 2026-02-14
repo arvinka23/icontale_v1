@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log*
+.env
+.git
+.gitignore
+*.md
+Dockerfile
+docker-compose.yml
+.prettierrc
+eslint.config.js
+__tests__
+.github
+icontale_v1-main

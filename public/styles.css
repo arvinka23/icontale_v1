@@ -91,7 +91,6 @@
 
 /* ── 2. Utility ──────────────────────────────────────────── */
 .hidden { display: none !important; }
-.flex   { display: flex !important; }
 
 .sr-only {
     position: absolute;
@@ -193,6 +192,7 @@ button {
     justify-content: center;
     gap: var(--space-sm);
     position: relative;
+    will-change: transform, box-shadow;
 }
 
 .primary-btn:hover,
@@ -622,6 +622,7 @@ textarea {
     height: 100%;
     border-radius: var(--radius-lg);
     transition: height 1s linear;
+    will-change: height;
 }
 
 .writing-main {
@@ -1518,6 +1519,7 @@ textarea {
     border-radius: var(--radius-full);
     animation: spin 0.8s linear infinite;
     margin: 0 auto var(--space-md);
+    will-change: transform;
 }
 
 .loading-text {
@@ -1692,5 +1694,98 @@ textarea:focus-visible {
 @media (prefers-contrast: high) {
     :root {
         --border: oklch(0.50 0 0);
+    }
+}
+
+
+/* ── 10. Container Queries ───────────────────────────────── */
+.container {
+    container-type: inline-size;
+    container-name: main;
+}
+
+@container main (max-width: 500px) {
+    .lobby-players-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-sm);
+    }
+
+    .writing-flex {
+        flex-direction: column;
+    }
+
+    .results-flex {
+        flex-direction: column;
+    }
+
+    .tabs {
+        flex-direction: column;
+    }
+}
+
+@container main (max-width: 350px) {
+    .lobby-players-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-pill-group {
+        flex-direction: column;
+    }
+}
+
+
+/* ── 11. Print ───────────────────────────────────────────── */
+@media print {
+    *,
+    *::before,
+    *::after {
+        background: transparent !important;
+        color: #000 !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    body {
+        padding: 0;
+        font-size: 12pt;
+    }
+
+    .container {
+        box-shadow: none;
+        border: 1px solid #ccc;
+        padding: 1cm;
+    }
+
+    /* Hide everything except the leaderboard */
+    .menu-section,
+    .lobby-section,
+    .writing-section,
+    .guess-section,
+    .result-section,
+    .tutorial-overlay,
+    .spectator-section,
+    .post-round-actions,
+    .connection-status,
+    #sound-toggle,
+    button {
+        display: none !important;
+    }
+
+    .leaderboard-section {
+        display: block !important;
+    }
+
+    .leaderboard-section h2 {
+        font-size: 18pt;
+        margin-bottom: 0.5cm;
+    }
+
+    .leaderboard-entry {
+        border-bottom: 1px solid #ccc;
+        padding: 4pt 0;
+    }
+
+    a[href]::after {
+        content: " (" attr(href) ")";
     }
 }
