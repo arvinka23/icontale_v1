@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IconTale – Kreatives Storytelling-Spiel</title>
+
+    <!-- SEO -->
+    <meta name="description" content="Ein Multiplayer-Storytelling-Spiel: Schreibe Geschichten zu Emoji-Kombinationen und errate die der anderen!">
+    <meta name="keywords" content="storytelling, multiplayer, emoji, game, kreativ, online">
+    <meta name="author" content="Arvin Ka">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="IconTale – Kreatives Storytelling-Spiel">
+    <meta property="og:description" content="Multiplayer-Storytelling mit Emojis. Schreibe, rate, gewinne!">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://arvinka23.github.io/icontale">
+    <meta property="og:site_name" content="IconTale">
+
+    <!-- Favicon & PWA -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/favicon.ico">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#764ba2">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Socket.io -->
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="game-header">
+            <h1>IconTale</h1>
+            <p class="game-subtitle">Kreative Geschichten mit Emojis!</p>
+            <button id="help-btn" class="help-btn" title="Anleitung anzeigen" aria-label="Hilfe">?</button>
+        </header>
+
+        <main class="game-content">
+
+            <!-- ── Main Menu ────────────────────────────── -->
+            <section id="main-menu" class="menu-section">
+                <div class="tabs">
+                    <button id="tab-create" class="tab active" aria-label="Lobby erstellen">
+                        <span class="tab-icon">✨</span> Lobby erstellen
+                    </button>
+                    <button id="tab-join" class="tab" aria-label="Lobby beitreten">
+                        <span class="tab-icon">🎯</span> Lobby beitreten
+                    </button>
+                </div>
+
+                <div class="emoji-block">
+                    <span id="user-emoji" class="user-emoji circle" role="img" aria-label="Dein Emoji">😀</span>
+                    <button id="change-emoji" class="change-emoji-btn circle" title="Emoji wechseln" aria-label="Emoji wechseln">
+                        <span class="change-icon">🔄</span>
+                    </button>
+                </div>
+
+                <div class="menu-fields">
+                    <div class="input-group">
+                        <label for="username" class="input-label">Dein Name</label>
+                        <input type="text" id="username" placeholder="Spitzname eingeben" maxlength="20" autocomplete="off">
+                    </div>
+                    <div class="input-group" id="room-code-group" style="display:none;">
+                        <label for="room-code-input" class="input-label">Lobby-Code</label>
+                        <input type="text" id="room-code-input" placeholder="6-stelliger Code" maxlength="6" pattern="[A-Za-z0-9]{6}" autocomplete="off">
+                    </div>
+                    <button id="menu-action-btn" class="primary-btn">
+                        <span class="btn-icon">🚀</span> Lobby erstellen
+                    </button>
+                    <button id="spectator-btn" class="secondary-btn" style="display:none;">
+                        <span class="btn-icon">👁️</span> Als Zuschauer beitreten
+                    </button>
+                </div>
+            </section>
+
+            <!-- ── Lobby ────────────────────────────────── -->
+            <section id="lobby" class="lobby-section" style="display:none;">
+                <div class="lobby-header">
+                    <h2 class="lobby-title">Lobby <span id="room-code" class="room-code"></span></h2>
+                    <p class="lobby-subtitle">Warte auf Spieler...</p>
+                    <div id="spectator-count" class="spectator-count" style="display:none;">
+                        <span class="btn-icon">👁️</span> <span id="spectator-num">0</span> Zuschauer
+                    </div>
+                </div>
+
+                <!-- Settings Panel (host only) -->
+                <div id="settings-panel" class="settings-panel" style="display:none;">
+                    <h3 class="settings-title">Einstellungen</h3>
+
+                    <div class="setting-group">
+                        <label class="setting-label">Spielmodus</label>
+                        <div class="setting-options" id="mode-options">
+                            <button class="setting-btn active" data-value="classic">🎭 Klassisch</button>
+                            <button class="setting-btn" data-value="speed">⚡ Speed</button>
+                            <button class="setting-btn" data-value="blind">🙈 Blind</button>
+                            <button class="setting-btn" data-value="team">👥 Team</button>
+                        </div>
+                        <p class="setting-desc" id="mode-desc">Schreibe Geschichten und errate Emojis + Autor.</p>
+                    </div>
+
+                    <div class="setting-group" id="timer-group">
+                        <label class="setting-label">Timer</label>
+                        <div class="setting-options" id="timer-options">
+                            <button class="setting-btn" data-value="60">1 Min</button>
+                            <button class="setting-btn" data-value="120">2 Min</button>
+                            <button class="setting-btn active" data-value="180">3 Min</button>
+                            <button class="setting-btn" data-value="300">5 Min</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-group" id="wordlimit-group">
+                        <label class="setting-label">Wortlimit</label>
+                        <div class="setting-options" id="wordlimit-options">
+                            <button class="setting-btn" data-value="100">100</button>
+                            <button class="setting-btn" data-value="250">250</button>
+                            <button class="setting-btn active" data-value="500">500</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label class="setting-label">Emoji-Anzahl</label>
+                        <div class="setting-options" id="emojicount-options">
+                            <button class="setting-btn" data-value="1">1</button>
+                            <button class="setting-btn" data-value="2">2</button>
+                            <button class="setting-btn active" data-value="3">3</button>
+                            <button class="setting-btn" data-value="4">4</button>
+                            <button class="setting-btn" data-value="5">5</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label class="setting-label">Runden</label>
+                        <div class="setting-options" id="rounds-options">
+                            <button class="setting-btn active" data-value="1">1</button>
+                            <button class="setting-btn" data-value="3">Best of 3</button>
+                            <button class="setting-btn" data-value="5">Best of 5</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label class="setting-label">Emoji-Pakete</label>
+                        <div class="emoji-pack-options" id="pack-options">
+                            <label class="pack-checkbox"><input type="checkbox" value="all" checked> 🌐 Alle</label>
+                            <label class="pack-checkbox"><input type="checkbox" value="faces"> 😀 Gesichter</label>
+                            <label class="pack-checkbox"><input type="checkbox" value="animals"> 🐾 Tiere</label>
+                            <label class="pack-checkbox"><input type="checkbox" value="food"> 🍕 Essen</label>
+                            <label class="pack-checkbox"><input type="checkbox" value="sports"> ⚽ Sport</label>
+                            <label class="pack-checkbox"><input type="checkbox" value="nature"> 🌈 Natur</label>
+                            <label class="pack-checkbox"><input type="checkbox" value="objects"> 📚 Objekte</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings display (non-host) -->
+                <div id="settings-display" class="settings-display" style="display:none;"></div>
+
+                <!-- Team display -->
+                <div id="team-display" class="team-display" style="display:none;"></div>
+
+                <div class="lobby-players-grid" id="players-grid" role="grid" aria-label="Spieler in der Lobby"></div>
+
+                <div class="lobby-actions">
+                    <button id="start-game" class="start-btn" disabled>
+                        <span class="btn-icon">🎬</span> Spiel starten
+                    </button>
+                    <p class="start-hint" id="start-hint">Mindestens 3 Spieler nötig</p>
+                </div>
+            </section>
+
+            <!-- ── Writing Phase ────────────────────────── -->
+            <section id="writing-section" class="writing-section" style="display:none;">
+                <div class="round-indicator" id="round-indicator" style="display:none;">
+                    Runde <span id="round-current">1</span> / <span id="round-total">1</span>
+                </div>
+
+                <div class="writing-flex">
+                    <div class="writing-timer">
+                        <div class="timer-display">
+                            <div class="timer-time" id="writing-timer-time">03:00</div>
+                            <div class="timer-label">Verbleibend</div>
+                        </div>
+                        <div class="timer-bar-outer">
+                            <div class="timer-bar-inner" id="writing-timer-bar"></div>
+                        </div>
+                    </div>
+
+                    <div class="writing-main">
+                        <div class="writing-header">
+                            <h3>Deine Emoji-Inspiration</h3>
+                            <div class="writing-emojis" id="writing-emojis" role="group" aria-label="Emojis für deine Geschichte"></div>
+                        </div>
+
+                        <div class="writing-area">
+                            <textarea id="writing-story" rows="8" placeholder="Lass deiner Kreativität freien Lauf! Schreibe eine Geschichte inspiriert von diesen Emojis..." maxlength="4000" aria-label="Geschichte schreiben"></textarea>
+                            <div class="story-stats">
+                                <span class="word-count">Wörter: <span id="word-count">0</span> / <span id="word-limit">500</span></span>
+                            </div>
+                        </div>
+
+                        <div class="writing-controls">
+                            <button id="writing-finish-btn" class="primary-btn">
+                                <span class="btn-icon">✅</span> Abschicken
+                            </button>
+                        </div>
+
+                        <div class="writing-progress" id="writing-progress" style="display:none;">
+                            <span id="stories-submitted">0</span> / <span id="stories-total">0</span> Geschichten eingereicht
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── Guess Phase ──────────────────────────── -->
+            <section id="guess-section" class="guess-section" style="display:none;">
+                <div class="round-indicator" id="guess-round-indicator" style="display:none;">
+                    Runde <span id="guess-round-current">1</span> / <span id="guess-round-total">1</span>
+                </div>
+
+                <div class="guess-flex">
+                    <div class="guess-story-block">
+                        <div class="guess-story-title">Geschichte zum Erraten:</div>
+                        <div id="guess-story" class="guess-story-text" role="article" aria-label="Geschichte erraten"></div>
+                    </div>
+
+                    <div class="guess-options">
+                        <div class="guess-group" id="emoji-guess-group">
+                            <div class="guess-emoji-title">Wähle die Emoji-Kombination:</div>
+                            <div id="emoji-options" class="guess-emoji-options" role="group" aria-label="Emoji-Optionen"></div>
+                        </div>
+
+                        <div class="guess-group">
+                            <div class="guess-player-title">Wer ist der Autor?</div>
+                            <div id="player-options" class="guess-player-options" role="group" aria-label="Spieler-Optionen"></div>
+                        </div>
+                    </div>
+
+                    <button id="submit-guess" class="primary-btn guess-submit-btn" disabled>
+                        <span class="btn-icon">🎯</span> Tipp abgeben
+                    </button>
+                </div>
+            </section>
+
+            <!-- ── Results Phase ────────────────────────── -->
+            <section id="results-section" class="results-section" style="display:none;">
+                <div class="round-indicator" id="results-round-indicator" style="display:none;">
+                    Runde <span id="results-round-current">1</span> / <span id="results-round-total">1</span>
+                </div>
+
+                <div class="results-flex">
+                    <div class="results-sidebar" id="results-sidebar" role="complementary" aria-label="Spielerliste"></div>
+
+                    <div class="results-chat-block">
+                        <div class="chat-header">
+                            <h3>Ergebnisse</h3>
+                        </div>
+                        <div id="results-chat" class="results-chat" role="log" aria-label="Chat-Nachrichten"></div>
+                        <button id="results-continue-btn" class="primary-btn results-continue-btn" style="display:none;">
+                            <span class="btn-icon">➡️</span> Weiter
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Team scores -->
+                <div id="team-scores" class="team-scores" style="display:none;"></div>
+
+                <!-- Leaderboard -->
+                <div class="leaderboard-container" id="leaderboard-container" style="display:none;">
+                    <h3 class="leaderboard-title">Leaderboard</h3>
+                    <table id="leaderboard-table" class="leaderboard-table" role="table" aria-label="Leaderboard"></table>
+
+                    <div class="post-round-actions" id="post-round-actions" style="display:none;">
+                        <button id="next-round-btn" class="primary-btn" style="display:none;">
+                            <span class="btn-icon">➡️</span> Nächste Runde
+                        </button>
+                        <button id="new-game-btn" class="secondary-btn" style="display:none;">
+                            <span class="btn-icon">🔄</span> Neues Spiel
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── Game Over (multi-round) ──────────────── -->
+            <section id="gameover-section" class="gameover-section" style="display:none;">
+                <h2 class="gameover-title">Spiel beendet!</h2>
+                <table id="gameover-table" class="leaderboard-table" role="table" aria-label="Endergebnis"></table>
+                <div id="gameover-team-scores" class="team-scores" style="display:none;"></div>
+                <button id="gameover-new-game-btn" class="primary-btn">
+                    <span class="btn-icon">🔄</span> Neues Spiel
+                </button>
+            </section>
+
+            <!-- ── Spectator View ───────────────────────── -->
+            <section id="spectator-section" class="spectator-section" style="display:none;">
+                <div class="spectator-badge">👁️ Zuschauer-Modus</div>
+                <div class="spectator-info" id="spectator-info">
+                    <p>Du schaust dem Spiel zu.</p>
+                </div>
+                <div id="spectator-content"></div>
+            </section>
+
+        </main>
+
+        <!-- Error Messages -->
+        <div id="error-message" class="error-message" role="alert" aria-live="polite" style="display:none;"></div>
+    </div>
+
+    <!-- ── Tutorial Modal ───────────────────────────────── -->
+    <div id="tutorial-modal" class="tutorial-overlay" style="display:none;">
+        <div class="tutorial-content">
+            <button id="tutorial-close" class="tutorial-close" aria-label="Schliessen">&times;</button>
+            <h2>Willkommen bei IconTale!</h2>
+            <div class="tutorial-steps">
+                <div class="tutorial-step">
+                    <span class="tutorial-step-num">1</span>
+                    <div>
+                        <h4>Lobby erstellen oder beitreten</h4>
+                        <p>Erstelle eine Lobby oder tritt mit einem 6-stelligen Code bei. Mindestens 3 Spieler werden benötigt.</p>
+                    </div>
+                </div>
+                <div class="tutorial-step">
+                    <span class="tutorial-step-num">2</span>
+                    <div>
+                        <h4>Geschichte schreiben</h4>
+                        <p>Du bekommst zufällige Emojis. Schreibe eine kreative Geschichte, die von ihnen inspiriert ist.</p>
+                    </div>
+                </div>
+                <div class="tutorial-step">
+                    <span class="tutorial-step-num">3</span>
+                    <div>
+                        <h4>Raten</h4>
+                        <p>Lies die Geschichte eines anderen Spielers und errate die Emoji-Kombination und den Autor.</p>
+                    </div>
+                </div>
+                <div class="tutorial-step">
+                    <span class="tutorial-step-num">4</span>
+                    <div>
+                        <h4>Punkte & Leaderboard</h4>
+                        <p>Sammle Punkte für richtiges Raten und dafür, dass niemand deine Geschichte errät!</p>
+                    </div>
+                </div>
+            </div>
+            <div class="tutorial-modes">
+                <h4>Spielmodi</h4>
+                <div class="tutorial-mode-grid">
+                    <div class="tutorial-mode">
+                        <strong>🎭 Klassisch</strong>
+                        <p>Errate Emojis und Autor.</p>
+                    </div>
+                    <div class="tutorial-mode">
+                        <strong>⚡ Speed</strong>
+                        <p>60 Sekunden, max 100 Wörter.</p>
+                    </div>
+                    <div class="tutorial-mode">
+                        <strong>🙈 Blind</strong>
+                        <p>Keine Emoji-Auswahl — nur den Autor erraten.</p>
+                    </div>
+                    <div class="tutorial-mode">
+                        <strong>👥 Team</strong>
+                        <p>Zwei Teams treten gegeneinander an.</p>
+                    </div>
+                </div>
+            </div>
+            <button id="tutorial-start-btn" class="primary-btn tutorial-start-btn">Verstanden!</button>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display:none;">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Laden...</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

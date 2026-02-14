@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://arvinka23.github.io/icontale/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 1
