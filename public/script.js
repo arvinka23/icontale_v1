@@ -2,7 +2,27 @@
 //  IconTale — Client
 // ═══════════════════════════════════════════════════════════════
 
-const socket = io();
+const socket = io({
+    reconnection: true,
+    reconnectionAttempts: 10,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+});
+
+// ── Session Token (for reconnect) ───────────────────────────
+let sessionToken = localStorage.getItem('icontale_session_token') || null;
+
+function saveSession(roomCode) {
+    sessionToken = `${roomCode}:${socket.id}:${Date.now()}`;
+    localStorage.setItem('icontale_session_token', sessionToken);
+    localStorage.setItem('icontale_room_code', roomCode);
+}
+
+function clearSession() {
+    sessionToken = null;
+    localStorage.removeItem('icontale_session_token');
+    localStorage.removeItem('icontale_room_code');
+}
 
 // ── Constants ────────────────────────────────────────────────
 const EMOJIS = [
@@ -884,6 +904,7 @@ socket.on('lobby-created', ({ roomCode, players, settings }) => {
     isSpectator = false;
     currentRoomCode = roomCode;
     currentSettings = settings;
+    saveSession(roomCode);
     showLobby(roomCode, players, settings);
 });
 
@@ -892,6 +913,7 @@ socket.on('lobby-joined', ({ roomCode, players, settings }) => {
     isSpectator = false;
     currentRoomCode = roomCode;
     currentSettings = settings;
+    saveSession(roomCode);
     showLobby(roomCode, players, settings);
 });
 
@@ -919,9 +941,27 @@ socket.on('lobby-error', ({ message }) => {
     showError(message);
 });
 
-socket.on('lobby-closed', () => {
-    showError('Lobby wurde geschlossen.');
+socket.on('lobby-closed', ({ reason } = {}) => {
+    clearSession();
+    showError(reason || 'Lobby wurde geschlossen.');
     setTimeout(() => window.location.reload(), 2000);
+});
+
+socket.on('host-changed', ({ newHost, newHostId }) => {
+    isHost = (newHostId === socket.id);
+    if (isHost) showError(`Du bist jetzt der Host!`);
+});
+
+socket.on('player-disconnected', ({ name, reconnectTimeout }) => {
+    showError(`${name} hat die Verbindung verloren. Wartezeit: ${Math.round(reconnectTimeout / 1000)}s`);
+});
+
+socket.on('player-reconnected', ({ name }) => {
+    showError(`${name} ist wieder verbunden!`);
+});
+
+socket.on('server-shutdown', ({ message }) => {
+    showError(message || 'Server wird neu gestartet...');
 });
 
 // Spectator
@@ -1011,6 +1051,7 @@ socket.on('leaderboard-phase', (data) => {
 });
 
 socket.on('game-over', (data) => {
+    clearSession();
     showGameOver(data);
 });
 
@@ -1021,6 +1062,39 @@ socket.on('back-to-lobby', ({ players, settings }) => {
 
 socket.on('story-error', ({ message }) => {
     showError(message);
+});
+
+// ── Reconnect handling ──────────────────────────────────────
+socket.on('connect', () => {
+    // If we have a stored session, attempt to reconnect
+    const storedToken = localStorage.getItem('icontale_session_token');
+    const storedRoom  = localStorage.getItem('icontale_room_code');
+    if (storedToken && storedRoom) {
+        socket.emit('reconnect-session', { sessionToken: storedToken, roomCode: storedRoom });
+    }
+});
+
+socket.on('reconnect-success', ({ roomCode, players, settings, started, currentRound, totalRounds, isHost: hostFlag, gamePhase }) => {
+    currentRoomCode = roomCode;
+    currentSettings = settings;
+    isHost = hostFlag;
+    isSpectator = false;
+    saveSession(roomCode);
+
+    // Restore to the right view based on game phase
+    if (!started || gamePhase === 'lobby') {
+        showLobby(roomCode, players, settings);
+    } else {
+        // Game in progress — show a waiting/lobby view
+        // The server will send the appropriate phase event
+        showLobby(roomCode, players, settings);
+        showError('Verbindung wiederhergestellt! Warte auf die nächste Phase...');
+    }
+});
+
+socket.on('reconnect-failed', ({ reason }) => {
+    clearSession();
+    // Don't show error on page load if there simply is no session
 });
 
 // ── Menu Action ──────────────────────────────────────────────
