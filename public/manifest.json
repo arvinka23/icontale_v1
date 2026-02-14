@@ -1,10 +1,10 @@
 {
-  "name": "IconTale - Creative Storytelling Game",
+  "name": "IconTale – Kreatives Storytelling-Spiel",
   "short_name": "IconTale",
-  "description": "A modern, fun, and interactive multiplayer storytelling game where players write creative stories based on emoji combinations!",
+  "description": "Ein Multiplayer-Storytelling-Spiel: Schreibe Geschichten zu Emoji-Kombinationen und errate die der anderen!",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#667eea",
+  "background_color": "#1a1625",
   "theme_color": "#764ba2",
   "orientation": "portrait-primary",
   "icons": [
@@ -15,6 +15,6 @@
     }
   ],
   "categories": ["games", "entertainment", "social"],
-  "lang": "en",
+  "lang": "de",
   "dir": "ltr"
 }

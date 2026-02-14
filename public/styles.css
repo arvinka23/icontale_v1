@@ -89,7 +89,23 @@
 }
 
 
-/* ── 2. Reset ─────────────────────────────────────────────── */
+/* ── 2. Utility ──────────────────────────────────────────── */
+.hidden { display: none !important; }
+.flex   { display: flex !important; }
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ── 3. Reset ─────────────────────────────────────────────── */
 *, *::before, *::after {
     margin: 0;
     padding: 0;
@@ -549,10 +565,8 @@ textarea {
 
 /* ── Writing Phase ────────────────────────────────────────── */
 .writing-section {
-    width: 100%;
-}
-
-#writing-section {
+    display: flex;
+    flex-direction: column;
     width: 100%;
 }
 

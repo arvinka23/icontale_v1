@@ -188,15 +188,15 @@ function getRandomEmoji() {
 function hideAllSections() {
     [dom.mainMenu, dom.lobby, dom.writingSection, dom.guessSection,
      dom.resultsSection, dom.gameoverSection, dom.spectatorSection].forEach(el => {
-        if (el) el.style.display = 'none';
+        if (el) el.classList.add('hidden');
     });
 }
 
 function showError(message) {
     dom.errorMessage.textContent = message;
-    dom.errorMessage.style.display = 'block';
+    dom.errorMessage.classList.remove('hidden');
     dom.errorMessage.style.animation = 'slideInDown 0.3s ease';
-    setTimeout(() => { dom.errorMessage.style.display = 'none'; }, 5000);
+    setTimeout(() => { dom.errorMessage.classList.add('hidden'); }, 5000);
 }
 
 function formatTime(seconds) {
@@ -237,15 +237,19 @@ function setTab(tab) {
     if (tab === 'create') {
         dom.tabCreate.classList.add('active');
         dom.tabJoin.classList.remove('active');
-        dom.roomCodeGroup.style.display = 'none';
-        dom.spectatorBtn.style.display = 'none';
+        dom.roomCodeGroup.classList.add('hidden');
+        dom.spectatorBtn.classList.add('hidden');
         dom.menuActionBtn.innerHTML = '<span class="btn-icon">🚀</span> Lobby erstellen';
+        dom.tabCreate.setAttribute('aria-selected', 'true');
+        dom.tabJoin.setAttribute('aria-selected', 'false');
     } else {
         dom.tabCreate.classList.remove('active');
         dom.tabJoin.classList.add('active');
-        dom.roomCodeGroup.style.display = 'block';
-        dom.spectatorBtn.style.display = 'block';
+        dom.roomCodeGroup.classList.remove('hidden');
+        dom.spectatorBtn.classList.remove('hidden');
         dom.menuActionBtn.innerHTML = '<span class="btn-icon">🎯</span> Lobby beitreten';
+        dom.tabCreate.setAttribute('aria-selected', 'false');
+        dom.tabJoin.setAttribute('aria-selected', 'true');
     }
 }
 dom.tabCreate.onclick = () => setTab('create');
@@ -362,20 +366,20 @@ function renderSettingsDisplay(settings) {
             <span class="setting-chip">🔄 ${settings.rounds} Runde${settings.rounds > 1 ? 'n' : ''}</span>
         </div>
     `;
-    dom.settingsDisplay.style.display = 'block';
+    dom.settingsDisplay.classList.remove('hidden');
 }
 
 // ── Lobby UI ─────────────────────────────────────────────────
 function showLobby(roomCode, players, settings) {
     hideAllSections();
-    dom.lobby.style.display = 'block';
+    dom.lobby.classList.remove('hidden');
     dom.roomCode.textContent = roomCode;
     currentSettings = settings || {};
 
     if (isHost) {
-        dom.settingsPanel.style.display = 'block';
-        dom.settingsDisplay.style.display = 'none';
-        dom.startGame.style.display = 'inline-flex';
+        dom.settingsPanel.classList.remove('hidden');
+        dom.settingsDisplay.classList.add('hidden');
+        dom.startGame.classList.remove('hidden');
         // Sync settings UI
         setSettingActive('mode-options', settings.gameMode);
         setSettingActive('timer-options', String(settings.timerDuration));
@@ -384,8 +388,8 @@ function showLobby(roomCode, players, settings) {
         setSettingActive('rounds-options', String(settings.rounds));
         dom.modeDesc.textContent = MODE_DESCRIPTIONS[settings.gameMode] || '';
     } else {
-        dom.settingsPanel.style.display = 'none';
-        dom.startGame.style.display = 'none';
+        dom.settingsPanel.classList.add('hidden');
+        dom.startGame.classList.add('hidden');
         renderSettingsDisplay(settings);
     }
 
@@ -426,15 +430,15 @@ function updatePlayersList(players) {
 // ── Writing Phase ────────────────────────────────────────────
 function showWritingPhase(emojis, writingStartTime, settings, round, totalRounds) {
     hideAllSections();
-    dom.writingSection.style.display = 'flex';
+    dom.writingSection.classList.remove('hidden');
 
     // Round indicator
     if (totalRounds > 1) {
-        dom.roundIndicator.style.display = 'block';
+        dom.roundIndicator.classList.remove('hidden');
         dom.roundCurrent.textContent = round;
         dom.roundTotal.textContent = totalRounds;
     } else {
-        dom.roundIndicator.style.display = 'none';
+        dom.roundIndicator.classList.add('hidden');
     }
 
     // Word limit
@@ -469,7 +473,7 @@ function showWritingPhase(emojis, writingStartTime, settings, round, totalRounds
     dom.wordCount.textContent = '0';
 
     // Progress
-    dom.writingProgress.style.display = 'block';
+    dom.writingProgress.classList.remove('hidden');
     dom.storiesSubmitted.textContent = '0';
     dom.storiesTotal.textContent = '0';
 
@@ -538,7 +542,7 @@ dom.writingFinishBtn.onclick = () => {
 // ── Guess Phase ──────────────────────────────────────────────
 function showGuessPhase(data) {
     hideAllSections();
-    dom.guessSection.style.display = 'block';
+    dom.guessSection.classList.remove('hidden');
     guessSubmitted = false;
     selectedEmojiCombo = null;
     selectedPlayerId = null;
@@ -551,9 +555,9 @@ function showGuessPhase(data) {
 
     // Blind mode: hide emoji group
     if (data.gameMode === 'blind') {
-        dom.emojiGuessGroup.style.display = 'none';
+        dom.emojiGuessGroup.classList.add('hidden');
     } else {
-        dom.emojiGuessGroup.style.display = 'block';
+        dom.emojiGuessGroup.classList.remove('hidden');
         dom.emojiOptions.innerHTML = '';
         data.emojiOptions.forEach(combo => {
             const btn = document.createElement('button');
@@ -616,7 +620,7 @@ function showGuessPhase(data) {
 }
 
 function updateGuessButton() {
-    const isBlind = dom.emojiGuessGroup.style.display === 'none';
+    const isBlind = dom.emojiGuessGroup.classList.contains('hidden');
     if (isBlind) {
         dom.submitGuess.disabled = !selectedPlayerId;
     } else {
@@ -638,9 +642,9 @@ function setGuessInputsDisabled(disabled) {
 // ── Results Phase ────────────────────────────────────────────
 function showResultsPhase(data) {
     hideAllSections();
-    dom.resultsSection.style.display = 'block';
-    dom.leaderboardContainer.style.display = 'none';
-    dom.postRoundActions.style.display = 'none';
+    dom.resultsSection.classList.remove('hidden');
+    dom.leaderboardContainer.classList.add('hidden');
+    dom.postRoundActions.classList.add('hidden');
 
     resultsPlayers = data.players;
     resultsData = data.results;
@@ -649,16 +653,16 @@ function showResultsPhase(data) {
 
     // Round indicator
     if (data.totalRounds > 1) {
-        dom.resultsRoundInd.style.display = 'block';
+        dom.resultsRoundInd.classList.remove('hidden');
         dom.resultsRoundCur.textContent = data.currentRound;
         dom.resultsRoundTot.textContent = data.totalRounds;
     } else {
-        dom.resultsRoundInd.style.display = 'none';
+        dom.resultsRoundInd.classList.add('hidden');
     }
 
     // Team scores
     if (data.teamScores) {
-        dom.teamScores.style.display = 'block';
+        dom.teamScores.classList.remove('hidden');
         dom.teamScores.innerHTML = `
             <div class="team-score-card team-a">
                 <span class="team-label">Team A</span>
@@ -670,13 +674,13 @@ function showResultsPhase(data) {
             </div>
         `;
     } else {
-        dom.teamScores.style.display = 'none';
+        dom.teamScores.classList.add('hidden');
     }
 
     renderResultsSidebar();
     renderResultsChat();
 
-    dom.resultsContinueBtn.style.display = isHost ? 'flex' : 'none';
+    dom.resultsContinueBtn.classList.toggle('hidden', !isHost);
     dom.resultsContinueBtn.disabled = false;
 }
 
@@ -760,28 +764,28 @@ dom.resultsContinueBtn.onclick = () => {
 
 // ── Leaderboard ──────────────────────────────────────────────
 function showLeaderboard(data) {
-    dom.leaderboardContainer.style.display = 'block';
-    dom.postRoundActions.style.display = 'flex';
+    dom.leaderboardContainer.classList.remove('hidden');
+    dom.postRoundActions.classList.remove('hidden');
 
     renderLeaderboardTable(dom.leaderboardTable, data.leaderboard, data.leaderboardDetails, data.players);
 
     // Show next round or new game button
     if (isHost) {
         if (data.currentRound < data.totalRounds) {
-            dom.nextRoundBtn.style.display = 'inline-flex';
-            dom.newGameBtn.style.display = 'none';
+            dom.nextRoundBtn.classList.remove('hidden');
+            dom.newGameBtn.classList.add('hidden');
         } else {
-            dom.nextRoundBtn.style.display = 'none';
-            dom.newGameBtn.style.display = 'inline-flex';
+            dom.nextRoundBtn.classList.add('hidden');
+            dom.newGameBtn.classList.remove('hidden');
         }
     } else {
-        dom.nextRoundBtn.style.display = 'none';
-        dom.newGameBtn.style.display = 'none';
+        dom.nextRoundBtn.classList.add('hidden');
+        dom.newGameBtn.classList.add('hidden');
     }
 
     // Team scores
     if (data.teamScores) {
-        dom.teamScores.style.display = 'block';
+        dom.teamScores.classList.remove('hidden');
         dom.teamScores.innerHTML = `
             <div class="team-score-card team-a ${data.teamScores.A > data.teamScores.B ? 'winning' : ''}">
                 <span class="team-label">Team A</span>
@@ -850,7 +854,7 @@ dom.gameoverNewGameBtn.onclick = () => {
 // ── Game Over ────────────────────────────────────────────────
 function showGameOver(data) {
     hideAllSections();
-    dom.gameoverSection.style.display = 'block';
+    dom.gameoverSection.classList.remove('hidden');
 
     renderLeaderboardTable(dom.gameoverTable, data.totalScores, null, data.players);
 
@@ -859,7 +863,7 @@ function showGameOver(data) {
         for (const pid of data.teams.A) teamScores.A += (data.totalScores[pid] || 0);
         for (const pid of data.teams.B) teamScores.B += (data.totalScores[pid] || 0);
 
-        dom.gameoverTeamScores.style.display = 'block';
+        dom.gameoverTeamScores.classList.remove('hidden');
         dom.gameoverTeamScores.innerHTML = `
             <div class="team-score-card team-a ${teamScores.A > teamScores.B ? 'winning' : ''}">
                 <span class="team-label">Team A</span>
@@ -872,23 +876,23 @@ function showGameOver(data) {
         `;
     }
 
-    dom.gameoverNewGameBtn.style.display = isHost ? 'inline-flex' : 'none';
+    dom.gameoverNewGameBtn.classList.toggle('hidden', !isHost);
 }
 
 // ── Spectator Mode ───────────────────────────────────────────
 function showSpectatorView(info) {
     hideAllSections();
-    dom.spectatorSection.style.display = 'block';
+    dom.spectatorSection.classList.remove('hidden');
     dom.spectatorInfo.innerHTML = `<p>${info || 'Du schaust dem Spiel zu.'}</p>`;
 }
 
 // ── Tutorial ─────────────────────────────────────────────────
 function showTutorial() {
-    dom.tutorialModal.style.display = 'flex';
+    dom.tutorialModal.classList.remove('hidden');
 }
 
 function hideTutorial() {
-    dom.tutorialModal.style.display = 'none';
+    dom.tutorialModal.classList.add('hidden');
     localStorage.setItem('icontale_tutorial_seen', 'true');
 }
 
@@ -930,10 +934,10 @@ socket.on('settings-update', (settings) => {
 
 socket.on('spectators-update', (spectators) => {
     if (spectators.length > 0) {
-        dom.spectatorCount.style.display = 'block';
+        dom.spectatorCount.classList.remove('hidden');
         dom.spectatorNum.textContent = spectators.length;
     } else {
-        dom.spectatorCount.style.display = 'none';
+        dom.spectatorCount.classList.add('hidden');
     }
 });
 
@@ -989,7 +993,7 @@ socket.on('teams-assigned', ({ teams, players }) => {
     if (dom.teamDisplay) {
         const teamANames = teams.A.map(id => players.find(p => p.id === id)).filter(Boolean);
         const teamBNames = teams.B.map(id => players.find(p => p.id === id)).filter(Boolean);
-        dom.teamDisplay.style.display = 'block';
+        dom.teamDisplay.classList.remove('hidden');
         dom.teamDisplay.innerHTML = `
             <div class="team-column team-a">
                 <h4>Team A</h4>

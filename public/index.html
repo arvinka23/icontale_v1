@@ -17,6 +17,16 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://arvinka23.github.io/icontale">
     <meta property="og:site_name" content="IconTale">
+    <meta property="og:image" content="/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="IconTale – Kreatives Storytelling-Spiel mit Emojis">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="IconTale – Kreatives Storytelling-Spiel">
+    <meta name="twitter:description" content="Multiplayer-Storytelling mit Emojis. Schreibe, rate, gewinne!">
+    <meta name="twitter:image" content="/og-image.png">
 
     <!-- Favicon & PWA -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -36,29 +46,36 @@
     <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
+    <noscript>
+        <div style="text-align:center;padding:3rem;font-family:sans-serif;">
+            <h1>IconTale</h1>
+            <p>Dieses Spiel benötigt JavaScript. Bitte aktiviere JavaScript in deinem Browser und lade die Seite neu.</p>
+        </div>
+    </noscript>
+
     <div class="container">
         <header class="game-header">
             <h1>IconTale</h1>
             <p class="game-subtitle">Kreative Geschichten mit Emojis!</p>
-            <button id="help-btn" class="help-btn" title="Anleitung anzeigen" aria-label="Hilfe">?</button>
+            <button id="help-btn" class="help-btn" title="Anleitung anzeigen" aria-label="Anleitung öffnen">?</button>
         </header>
 
         <main class="game-content">
 
-            <!-- ── Main Menu ────────────────────────────── -->
-            <section id="main-menu" class="menu-section">
-                <div class="tabs">
-                    <button id="tab-create" class="tab active" aria-label="Lobby erstellen">
+            <!-- ── Hauptmenü ─────────────────────────────── -->
+            <section id="main-menu" class="menu-section" aria-label="Hauptmenü">
+                <div class="tabs" role="tablist" aria-label="Lobby-Optionen">
+                    <button id="tab-create" class="tab active" role="tab" aria-selected="true" aria-controls="main-menu">
                         <span class="tab-icon">✨</span> Lobby erstellen
                     </button>
-                    <button id="tab-join" class="tab" aria-label="Lobby beitreten">
+                    <button id="tab-join" class="tab" role="tab" aria-selected="false" aria-controls="main-menu">
                         <span class="tab-icon">🎯</span> Lobby beitreten
                     </button>
                 </div>
 
                 <div class="emoji-block">
-                    <span id="user-emoji" class="user-emoji circle" role="img" aria-label="Dein Emoji">😀</span>
-                    <button id="change-emoji" class="change-emoji-btn circle" title="Emoji wechseln" aria-label="Emoji wechseln">
+                    <span id="user-emoji" class="user-emoji circle" role="img" aria-label="Dein gewähltes Emoji">😀</span>
+                    <button id="change-emoji" class="change-emoji-btn circle" title="Emoji wechseln" aria-label="Zufälliges Emoji wählen">
                         <span class="change-icon">🔄</span>
                     </button>
                 </div>
@@ -66,82 +83,83 @@
                 <div class="menu-fields">
                     <div class="input-group">
                         <label for="username" class="input-label">Dein Name</label>
-                        <input type="text" id="username" placeholder="Spitzname eingeben" maxlength="20" autocomplete="off">
+                        <input type="text" id="username" placeholder="Spitzname eingeben" maxlength="20" autocomplete="off" aria-required="true">
                     </div>
-                    <div class="input-group" id="room-code-group" style="display:none;">
+                    <div class="input-group hidden" id="room-code-group">
                         <label for="room-code-input" class="input-label">Lobby-Code</label>
-                        <input type="text" id="room-code-input" placeholder="6-stelliger Code" maxlength="6" pattern="[A-Za-z0-9]{6}" autocomplete="off">
+                        <input type="text" id="room-code-input" placeholder="6-stelliger Code" maxlength="6" pattern="[A-Za-z0-9]{6}" autocomplete="off" aria-describedby="room-code-hint">
+                        <span id="room-code-hint" class="sr-only">Gib den 6-stelligen alphanumerischen Lobby-Code ein</span>
                     </div>
                     <button id="menu-action-btn" class="primary-btn">
                         <span class="btn-icon">🚀</span> Lobby erstellen
                     </button>
-                    <button id="spectator-btn" class="secondary-btn" style="display:none;">
+                    <button id="spectator-btn" class="secondary-btn hidden">
                         <span class="btn-icon">👁️</span> Als Zuschauer beitreten
                     </button>
                 </div>
             </section>
 
-            <!-- ── Lobby ────────────────────────────────── -->
-            <section id="lobby" class="lobby-section" style="display:none;">
+            <!-- ── Lobby ─────────────────────────────────── -->
+            <section id="lobby" class="lobby-section hidden" aria-label="Lobby">
                 <div class="lobby-header">
                     <h2 class="lobby-title">Lobby <span id="room-code" class="room-code"></span></h2>
                     <p class="lobby-subtitle">Warte auf Spieler...</p>
-                    <div id="spectator-count" class="spectator-count" style="display:none;">
+                    <div id="spectator-count" class="spectator-count hidden" aria-live="polite">
                         <span class="btn-icon">👁️</span> <span id="spectator-num">0</span> Zuschauer
                     </div>
                 </div>
 
-                <!-- Settings Panel (host only) -->
-                <div id="settings-panel" class="settings-panel" style="display:none;">
+                <!-- Einstellungen (nur Host) -->
+                <div id="settings-panel" class="settings-panel hidden" aria-label="Spieleinstellungen">
                     <h3 class="settings-title">Einstellungen</h3>
 
                     <div class="setting-group">
-                        <label class="setting-label">Spielmodus</label>
-                        <div class="setting-options" id="mode-options">
-                            <button class="setting-btn active" data-value="classic">🎭 Klassisch</button>
-                            <button class="setting-btn" data-value="speed">⚡ Speed</button>
-                            <button class="setting-btn" data-value="blind">🙈 Blind</button>
-                            <button class="setting-btn" data-value="team">👥 Team</button>
+                        <label class="setting-label" id="mode-label">Spielmodus</label>
+                        <div class="setting-options" id="mode-options" role="radiogroup" aria-labelledby="mode-label">
+                            <button class="setting-btn active" data-value="classic" role="radio" aria-checked="true">🎭 Klassisch</button>
+                            <button class="setting-btn" data-value="speed" role="radio" aria-checked="false">⚡ Speed</button>
+                            <button class="setting-btn" data-value="blind" role="radio" aria-checked="false">🙈 Blind</button>
+                            <button class="setting-btn" data-value="team" role="radio" aria-checked="false">👥 Team</button>
                         </div>
-                        <p class="setting-desc" id="mode-desc">Schreibe Geschichten und errate Emojis + Autor.</p>
+                        <p class="setting-desc" id="mode-desc" aria-live="polite">Schreibe Geschichten und errate Emojis + Autor.</p>
                     </div>
 
                     <div class="setting-group" id="timer-group">
-                        <label class="setting-label">Timer</label>
-                        <div class="setting-options" id="timer-options">
-                            <button class="setting-btn" data-value="60">1 Min</button>
-                            <button class="setting-btn" data-value="120">2 Min</button>
-                            <button class="setting-btn active" data-value="180">3 Min</button>
-                            <button class="setting-btn" data-value="300">5 Min</button>
+                        <label class="setting-label" id="timer-label">Timer</label>
+                        <div class="setting-options" id="timer-options" role="radiogroup" aria-labelledby="timer-label">
+                            <button class="setting-btn" data-value="60" role="radio" aria-checked="false">1 Min</button>
+                            <button class="setting-btn" data-value="120" role="radio" aria-checked="false">2 Min</button>
+                            <button class="setting-btn active" data-value="180" role="radio" aria-checked="true">3 Min</button>
+                            <button class="setting-btn" data-value="300" role="radio" aria-checked="false">5 Min</button>
                         </div>
                     </div>
 
                     <div class="setting-group" id="wordlimit-group">
-                        <label class="setting-label">Wortlimit</label>
-                        <div class="setting-options" id="wordlimit-options">
-                            <button class="setting-btn" data-value="100">100</button>
-                            <button class="setting-btn" data-value="250">250</button>
-                            <button class="setting-btn active" data-value="500">500</button>
+                        <label class="setting-label" id="wordlimit-label">Wortlimit</label>
+                        <div class="setting-options" id="wordlimit-options" role="radiogroup" aria-labelledby="wordlimit-label">
+                            <button class="setting-btn" data-value="100" role="radio" aria-checked="false">100</button>
+                            <button class="setting-btn" data-value="250" role="radio" aria-checked="false">250</button>
+                            <button class="setting-btn active" data-value="500" role="radio" aria-checked="true">500</button>
                         </div>
                     </div>
 
                     <div class="setting-group">
-                        <label class="setting-label">Emoji-Anzahl</label>
-                        <div class="setting-options" id="emojicount-options">
-                            <button class="setting-btn" data-value="1">1</button>
-                            <button class="setting-btn" data-value="2">2</button>
-                            <button class="setting-btn active" data-value="3">3</button>
-                            <button class="setting-btn" data-value="4">4</button>
-                            <button class="setting-btn" data-value="5">5</button>
+                        <label class="setting-label" id="emojicount-label">Emoji-Anzahl</label>
+                        <div class="setting-options" id="emojicount-options" role="radiogroup" aria-labelledby="emojicount-label">
+                            <button class="setting-btn" data-value="1" role="radio" aria-checked="false">1</button>
+                            <button class="setting-btn" data-value="2" role="radio" aria-checked="false">2</button>
+                            <button class="setting-btn active" data-value="3" role="radio" aria-checked="true">3</button>
+                            <button class="setting-btn" data-value="4" role="radio" aria-checked="false">4</button>
+                            <button class="setting-btn" data-value="5" role="radio" aria-checked="false">5</button>
                         </div>
                     </div>
 
                     <div class="setting-group">
-                        <label class="setting-label">Runden</label>
-                        <div class="setting-options" id="rounds-options">
-                            <button class="setting-btn active" data-value="1">1</button>
-                            <button class="setting-btn" data-value="3">Best of 3</button>
-                            <button class="setting-btn" data-value="5">Best of 5</button>
+                        <label class="setting-label" id="rounds-label">Runden</label>
+                        <div class="setting-options" id="rounds-options" role="radiogroup" aria-labelledby="rounds-label">
+                            <button class="setting-btn active" data-value="1" role="radio" aria-checked="true">1</button>
+                            <button class="setting-btn" data-value="3" role="radio" aria-checked="false">Best of 3</button>
+                            <button class="setting-btn" data-value="5" role="radio" aria-checked="false">Best of 5</button>
                         </div>
                     </div>
 
@@ -159,35 +177,35 @@
                     </div>
                 </div>
 
-                <!-- Settings display (non-host) -->
-                <div id="settings-display" class="settings-display" style="display:none;"></div>
+                <!-- Einstellungen-Anzeige (Nicht-Host) -->
+                <div id="settings-display" class="settings-display hidden"></div>
 
-                <!-- Team display -->
-                <div id="team-display" class="team-display" style="display:none;"></div>
+                <!-- Team-Anzeige -->
+                <div id="team-display" class="team-display hidden"></div>
 
-                <div class="lobby-players-grid" id="players-grid" role="grid" aria-label="Spieler in der Lobby"></div>
+                <div class="lobby-players-grid" id="players-grid" role="list" aria-label="Spieler in der Lobby"></div>
 
                 <div class="lobby-actions">
-                    <button id="start-game" class="start-btn" disabled>
+                    <button id="start-game" class="start-btn" disabled aria-label="Spiel starten">
                         <span class="btn-icon">🎬</span> Spiel starten
                     </button>
                     <p class="start-hint" id="start-hint">Mindestens 3 Spieler nötig</p>
                 </div>
             </section>
 
-            <!-- ── Writing Phase ────────────────────────── -->
-            <section id="writing-section" class="writing-section" style="display:none;">
-                <div class="round-indicator" id="round-indicator" style="display:none;">
+            <!-- ── Schreibphase ──────────────────────────── -->
+            <section id="writing-section" class="writing-section hidden" aria-label="Schreibphase">
+                <div class="round-indicator hidden" id="round-indicator" aria-live="polite">
                     Runde <span id="round-current">1</span> / <span id="round-total">1</span>
                 </div>
 
                 <div class="writing-flex">
-                    <div class="writing-timer">
+                    <div class="writing-timer" aria-label="Verbleibende Zeit">
                         <div class="timer-display">
-                            <div class="timer-time" id="writing-timer-time">03:00</div>
+                            <div class="timer-time" id="writing-timer-time" aria-live="off">03:00</div>
                             <div class="timer-label">Verbleibend</div>
                         </div>
-                        <div class="timer-bar-outer">
+                        <div class="timer-bar-outer" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
                             <div class="timer-bar-inner" id="writing-timer-bar"></div>
                         </div>
                     </div>
@@ -199,108 +217,108 @@
                         </div>
 
                         <div class="writing-area">
-                            <textarea id="writing-story" rows="8" placeholder="Lass deiner Kreativität freien Lauf! Schreibe eine Geschichte inspiriert von diesen Emojis..." maxlength="4000" aria-label="Geschichte schreiben"></textarea>
+                            <textarea id="writing-story" rows="8" placeholder="Lass deiner Kreativität freien Lauf! Schreibe eine Geschichte inspiriert von diesen Emojis..." maxlength="4000" aria-label="Deine Geschichte"></textarea>
                             <div class="story-stats">
                                 <span class="word-count">Wörter: <span id="word-count">0</span> / <span id="word-limit">500</span></span>
                             </div>
                         </div>
 
                         <div class="writing-controls">
-                            <button id="writing-finish-btn" class="primary-btn">
+                            <button id="writing-finish-btn" class="primary-btn" aria-label="Geschichte abschicken">
                                 <span class="btn-icon">✅</span> Abschicken
                             </button>
                         </div>
 
-                        <div class="writing-progress" id="writing-progress" style="display:none;">
+                        <div class="writing-progress hidden" id="writing-progress" aria-live="polite">
                             <span id="stories-submitted">0</span> / <span id="stories-total">0</span> Geschichten eingereicht
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- ── Guess Phase ──────────────────────────── -->
-            <section id="guess-section" class="guess-section" style="display:none;">
-                <div class="round-indicator" id="guess-round-indicator" style="display:none;">
+            <!-- ── Ratephase ─────────────────────────────── -->
+            <section id="guess-section" class="guess-section hidden" aria-label="Ratephase">
+                <div class="round-indicator hidden" id="guess-round-indicator" aria-live="polite">
                     Runde <span id="guess-round-current">1</span> / <span id="guess-round-total">1</span>
                 </div>
 
                 <div class="guess-flex">
                     <div class="guess-story-block">
                         <div class="guess-story-title">Geschichte zum Erraten:</div>
-                        <div id="guess-story" class="guess-story-text" role="article" aria-label="Geschichte erraten"></div>
+                        <div id="guess-story" class="guess-story-text" role="article" aria-label="Die Geschichte eines anderen Spielers"></div>
                     </div>
 
                     <div class="guess-options">
                         <div class="guess-group" id="emoji-guess-group">
-                            <div class="guess-emoji-title">Wähle die Emoji-Kombination:</div>
-                            <div id="emoji-options" class="guess-emoji-options" role="group" aria-label="Emoji-Optionen"></div>
+                            <div class="guess-emoji-title" id="emoji-guess-title">Wähle die Emoji-Kombination:</div>
+                            <div id="emoji-options" class="guess-emoji-options" role="radiogroup" aria-labelledby="emoji-guess-title"></div>
                         </div>
 
                         <div class="guess-group">
-                            <div class="guess-player-title">Wer ist der Autor?</div>
-                            <div id="player-options" class="guess-player-options" role="group" aria-label="Spieler-Optionen"></div>
+                            <div class="guess-player-title" id="player-guess-title">Wer ist der Autor?</div>
+                            <div id="player-options" class="guess-player-options" role="radiogroup" aria-labelledby="player-guess-title"></div>
                         </div>
                     </div>
 
-                    <button id="submit-guess" class="primary-btn guess-submit-btn" disabled>
+                    <button id="submit-guess" class="primary-btn guess-submit-btn" disabled aria-label="Tipp abgeben">
                         <span class="btn-icon">🎯</span> Tipp abgeben
                     </button>
                 </div>
             </section>
 
-            <!-- ── Results Phase ────────────────────────── -->
-            <section id="results-section" class="results-section" style="display:none;">
-                <div class="round-indicator" id="results-round-indicator" style="display:none;">
+            <!-- ── Ergebnisse ────────────────────────────── -->
+            <section id="results-section" class="results-section hidden" aria-label="Ergebnisse">
+                <div class="round-indicator hidden" id="results-round-indicator" aria-live="polite">
                     Runde <span id="results-round-current">1</span> / <span id="results-round-total">1</span>
                 </div>
 
                 <div class="results-flex">
-                    <div class="results-sidebar" id="results-sidebar" role="complementary" aria-label="Spielerliste"></div>
+                    <div class="results-sidebar" id="results-sidebar" role="complementary" aria-label="Spielerübersicht"></div>
 
                     <div class="results-chat-block">
                         <div class="chat-header">
                             <h3>Ergebnisse</h3>
                         </div>
-                        <div id="results-chat" class="results-chat" role="log" aria-label="Chat-Nachrichten"></div>
-                        <button id="results-continue-btn" class="primary-btn results-continue-btn" style="display:none;">
+                        <div id="results-chat" class="results-chat" role="log" aria-label="Ergebnis-Nachrichten" aria-live="polite"></div>
+                        <button id="results-continue-btn" class="primary-btn results-continue-btn hidden" aria-label="Nächstes Ergebnis anzeigen">
                             <span class="btn-icon">➡️</span> Weiter
                         </button>
                     </div>
                 </div>
 
-                <!-- Team scores -->
-                <div id="team-scores" class="team-scores" style="display:none;"></div>
+                <!-- Team-Punkte -->
+                <div id="team-scores" class="team-scores hidden" aria-label="Team-Punktestand"></div>
 
-                <!-- Leaderboard -->
-                <div class="leaderboard-container" id="leaderboard-container" style="display:none;">
-                    <h3 class="leaderboard-title">Leaderboard</h3>
-                    <table id="leaderboard-table" class="leaderboard-table" role="table" aria-label="Leaderboard"></table>
+                <!-- Rangliste -->
+                <div class="leaderboard-container hidden" id="leaderboard-container" aria-label="Rangliste">
+                    <h3 class="leaderboard-title">Rangliste</h3>
+                    <table id="leaderboard-table" class="leaderboard-table" role="table" aria-label="Punkteübersicht"></table>
 
-                    <div class="post-round-actions" id="post-round-actions" style="display:none;">
-                        <button id="next-round-btn" class="primary-btn" style="display:none;">
+                    <div class="post-round-actions hidden" id="post-round-actions">
+                        <button id="next-round-btn" class="primary-btn hidden" aria-label="Nächste Runde starten">
                             <span class="btn-icon">➡️</span> Nächste Runde
                         </button>
-                        <button id="new-game-btn" class="secondary-btn" style="display:none;">
+                        <button id="new-game-btn" class="secondary-btn hidden" aria-label="Neues Spiel starten">
                             <span class="btn-icon">🔄</span> Neues Spiel
                         </button>
                     </div>
                 </div>
             </section>
 
-            <!-- ── Game Over (multi-round) ──────────────── -->
-            <section id="gameover-section" class="gameover-section" style="display:none;">
+            <!-- ── Spielende (Mehrrunden) ────────────────── -->
+            <section id="gameover-section" class="gameover-section hidden" aria-label="Spielende">
                 <h2 class="gameover-title">Spiel beendet!</h2>
                 <table id="gameover-table" class="leaderboard-table" role="table" aria-label="Endergebnis"></table>
-                <div id="gameover-team-scores" class="team-scores" style="display:none;"></div>
-                <button id="gameover-new-game-btn" class="primary-btn">
+                <div id="gameover-team-scores" class="team-scores hidden" aria-label="Team-Endergebnis"></div>
+                <button id="gameover-new-game-btn" class="primary-btn" aria-label="Neues Spiel starten">
                     <span class="btn-icon">🔄</span> Neues Spiel
                 </button>
             </section>
 
-            <!-- ── Spectator View ───────────────────────── -->
-            <section id="spectator-section" class="spectator-section" style="display:none;">
+            <!-- ── Zuschauer-Ansicht ─────────────────────── -->
+            <section id="spectator-section" class="spectator-section hidden" aria-label="Zuschauer-Modus">
                 <div class="spectator-badge">👁️ Zuschauer-Modus</div>
-                <div class="spectator-info" id="spectator-info">
+                <div class="spectator-info" id="spectator-info" aria-live="polite">
                     <p>Du schaust dem Spiel zu.</p>
                 </div>
                 <div id="spectator-content"></div>
@@ -308,41 +326,41 @@
 
         </main>
 
-        <!-- Error Messages -->
-        <div id="error-message" class="error-message" role="alert" aria-live="polite" style="display:none;"></div>
+        <!-- Fehlermeldungen -->
+        <div id="error-message" class="error-message hidden" role="alert" aria-live="assertive"></div>
     </div>
 
-    <!-- ── Tutorial Modal ───────────────────────────────── -->
-    <div id="tutorial-modal" class="tutorial-overlay" style="display:none;">
+    <!-- ── Anleitung ──────────────────────────────────────── -->
+    <div id="tutorial-modal" class="tutorial-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="tutorial-heading">
         <div class="tutorial-content">
-            <button id="tutorial-close" class="tutorial-close" aria-label="Schliessen">&times;</button>
-            <h2>Willkommen bei IconTale!</h2>
+            <button id="tutorial-close" class="tutorial-close" aria-label="Anleitung schliessen">&times;</button>
+            <h2 id="tutorial-heading">Willkommen bei IconTale!</h2>
             <div class="tutorial-steps">
                 <div class="tutorial-step">
-                    <span class="tutorial-step-num">1</span>
+                    <span class="tutorial-step-num" aria-hidden="true">1</span>
                     <div>
                         <h4>Lobby erstellen oder beitreten</h4>
                         <p>Erstelle eine Lobby oder tritt mit einem 6-stelligen Code bei. Mindestens 3 Spieler werden benötigt.</p>
                     </div>
                 </div>
                 <div class="tutorial-step">
-                    <span class="tutorial-step-num">2</span>
+                    <span class="tutorial-step-num" aria-hidden="true">2</span>
                     <div>
                         <h4>Geschichte schreiben</h4>
                         <p>Du bekommst zufällige Emojis. Schreibe eine kreative Geschichte, die von ihnen inspiriert ist.</p>
                     </div>
                 </div>
                 <div class="tutorial-step">
-                    <span class="tutorial-step-num">3</span>
+                    <span class="tutorial-step-num" aria-hidden="true">3</span>
                     <div>
                         <h4>Raten</h4>
                         <p>Lies die Geschichte eines anderen Spielers und errate die Emoji-Kombination und den Autor.</p>
                     </div>
                 </div>
                 <div class="tutorial-step">
-                    <span class="tutorial-step-num">4</span>
+                    <span class="tutorial-step-num" aria-hidden="true">4</span>
                     <div>
-                        <h4>Punkte & Leaderboard</h4>
+                        <h4>Punkte & Rangliste</h4>
                         <p>Sammle Punkte für richtiges Raten und dafür, dass niemand deine Geschichte errät!</p>
                     </div>
                 </div>
@@ -372,14 +390,20 @@
         </div>
     </div>
 
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" class="loading-overlay" style="display:none;">
+    <!-- Ladebildschirm -->
+    <div id="loading-overlay" class="loading-overlay hidden" role="status" aria-label="Wird geladen">
         <div class="loading-content">
-            <div class="loading-spinner"></div>
+            <div class="loading-spinner" aria-hidden="true"></div>
             <p class="loading-text">Laden...</p>
         </div>
     </div>
 
     <script src="script.js"></script>
+    <script>
+        // Service Worker registrieren (PWA-Unterstützung)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        }
+    </script>
 </body>
 </html>
