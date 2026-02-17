@@ -9,5 +9,5 @@
   <!-- Full circle for maskable safe zone -->
   <circle cx="256" cy="256" r="205" fill="url(#gradMask)"/>
   <text x="256" y="250" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">IT</text>
-  <text x="256" y="340" font-size="64" text-anchor="middle" dominant-baseline="middle">=Ö</text>
+  <text x="256" y="340" font-size="64" text-anchor="middle" dominant-baseline="middle">=ï¿½</text>
 </svg>

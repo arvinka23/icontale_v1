@@ -7,8 +7,17 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-# Copy application files
-COPY server.js ./
+# Build TypeScript
+FROM base AS builder
+RUN npm ci
+COPY tsconfig.json ./
+COPY server.ts ./
+COPY lib/ ./lib/
+RUN npx tsc
+
+# Production image
+FROM base AS production
+COPY --from=builder /app/dist ./dist/
 COPY lib/ ./lib/
 COPY public/ ./public/
 
@@ -22,4 +31,4 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
 ENV NODE_ENV=production
-CMD ["node", "server.js"]
+CMD ["node", "dist/server.js"]

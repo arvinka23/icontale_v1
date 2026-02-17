@@ -1789,3 +1789,187 @@ textarea:focus-visible {
         content: " (" attr(href) ")";
     }
 }
+
+/* ── 12. Achievement Toasts ─────────────────────────────── */
+
+#achievement-toasts {
+    position: fixed;
+    top: var(--space-lg);
+    right: var(--space-lg);
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    pointer-events: none;
+}
+
+.achievement-toast {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: oklch(0.25 0.03 280 / 0.95);
+    border: 2px solid oklch(0.65 0.20 280);
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(10px);
+    animation: toast-slide-in 0.4s ease-out, toast-fade-out 0.4s ease-in 3.6s forwards;
+    pointer-events: auto;
+    max-width: 320px;
+    box-shadow: 0 4px 20px oklch(0.65 0.20 280 / 0.3);
+}
+
+.achievement-toast .toast-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.achievement-toast .toast-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.achievement-toast .toast-title {
+    font-weight: 700;
+    color: oklch(0.90 0.05 280);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.achievement-toast .toast-name {
+    font-weight: 600;
+    color: oklch(0.95 0.02 280);
+    font-size: 1rem;
+}
+
+.achievement-toast .toast-desc {
+    color: oklch(0.75 0.02 280);
+    font-size: 0.8rem;
+}
+
+@keyframes toast-slide-in {
+    from { transform: translateX(120%); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toast-fade-out {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(40px); }
+}
+
+/* ── 13. Replay Viewer ──────────────────────────────────── */
+
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: oklch(0.10 0 0 / 0.8);
+    backdrop-filter: blur(6px);
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: oklch(0.18 0.02 280);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    max-width: 700px;
+    width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    border: 1px solid oklch(0.35 0.06 280);
+    box-shadow: 0 8px 40px oklch(0 0 0 / 0.5);
+}
+
+.modal-close {
+    position: absolute;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    background: none;
+    border: none;
+    color: oklch(0.70 0 0);
+    font-size: 1.8rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: var(--space-xs);
+    will-change: auto;
+}
+
+.modal-close:hover {
+    color: oklch(0.95 0 0);
+}
+
+.replay-viewer h2 {
+    margin-bottom: var(--space-md);
+    text-align: center;
+}
+
+.replay-timeline {
+    display: flex;
+    gap: 4px;
+    margin-bottom: var(--space-md);
+    padding: var(--space-xs);
+    background: oklch(0.14 0.01 280);
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+}
+
+.replay-timeline .timeline-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: oklch(0.35 0.05 280);
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.replay-timeline .timeline-dot.active {
+    background: oklch(0.65 0.20 280);
+    transform: scale(1.4);
+}
+
+.replay-timeline .timeline-dot:hover {
+    background: oklch(0.55 0.15 280);
+}
+
+.replay-content {
+    min-height: 200px;
+    padding: var(--space-md);
+    background: oklch(0.14 0.01 280);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-md);
+    font-family: var(--font-mono, monospace);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: oklch(0.85 0.02 280);
+}
+
+.replay-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+}
+
+.replay-counter {
+    font-size: 0.9rem;
+    color: oklch(0.70 0.02 280);
+    font-variant-numeric: tabular-nums;
+}
+
+.btn-sm {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.85rem;
+    border-radius: var(--radius-sm);
+}
+
+} 

@@ -16,9 +16,9 @@ const SHELL_ASSETS = [
     '/js/socket-handlers.js',
     '/manifest.json',
     '/favicon.ico',
-    '/icon-192.svg',
-    '/icon-512.svg',
-    '/icon-maskable.svg',
+    '/icon-192.png',
+    '/icon-512.png',
+    '/icon-maskable.png',
     '/og-image.png',
 ];
 

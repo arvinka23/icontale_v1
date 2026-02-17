@@ -26,6 +26,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: TypeScript type-check
+        run: npx tsc --noEmit
+
+      - name: Build TypeScript
+        run: npm run build
+
       - name: Security audit
         run: npm audit --audit-level=high
 
@@ -47,7 +53,10 @@ jobs:
 
       - name: Test Docker container
         run: |
-          docker run -d --name icontale-test -p 3000:3000 icontale:test
+          docker run -d --name redis-test redis:7-alpine
+          sleep 3
+          REDIS_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis-test)
+          docker run -d --name icontale-test -p 3000:3000 -e REDIS_URL=redis://$REDIS_IP:6379 icontale:test
           sleep 5
           curl -f http://localhost:3000/health || exit 1
-          docker stop icontale-test
+          docker stop icontale-test redis-test

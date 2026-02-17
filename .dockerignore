@@ -1,4 +1,5 @@
 node_modules
+dist
 npm-debug.log*
 .env
 .git
@@ -11,3 +12,4 @@ eslint.config.js
 __tests__
 .github
 icontale_v1-main
+scripts

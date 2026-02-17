@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-const { processRoundResults, calculateTeamScores, POINTS } = await import('../lib/scoring.js');
+const { processRoundResults, calculateTeamScores, POINTS } = await import('../lib/scoring.ts');
 
 describe('scoring', () => {
 

@@ -47,6 +47,9 @@ export const state = {
     currentChatIdx:  0,
     currentMsgStep:  0,
 
+    // Replay
+    lastReplayId:    null,
+
     // Timers (stored so they can be cleaned up)
     writingTimer:    null,
     writingTimeLeft: 180,

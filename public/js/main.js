@@ -10,6 +10,7 @@ import {
 } from './ui.js';
 import { loadSoundPreference, toggleSound, playClick } from './sounds.js';
 import { registerSocketHandlers } from './socket-handlers.js';
+import { openReplay } from './replay.js';
 
 // ── Socket.io (loaded globally via <script> tag) ────────────
 const socket = window.io({
@@ -91,6 +92,13 @@ dom.newGameBtn.onclick = () => {
 dom.gameoverNewGameBtn.onclick = () => {
     socket.emit('new-game', { roomCode: state.roomCode });
 };
+
+// Replay viewer (if replay button exists in game-over screen)
+document.addEventListener('click', (e) => {
+    if (e.target.closest('#replay-btn') && state.lastReplayId) {
+        openReplay(state.lastReplayId);
+    }
+});
 
 // Menu action (create / join)
 dom.menuActionBtn.onclick = () => {

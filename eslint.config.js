@@ -3,7 +3,7 @@ import js from '@eslint/js';
 export default [
     js.configs.recommended,
     {
-        files: ['**/*.js'],
+        files: ['**/*.js', '**/*.ts'],
         languageOptions: {
             ecmaVersion: 2022,
             sourceType: 'module',
@@ -27,9 +27,9 @@ export default [
         },
     },
     {
-        files: ['server.js', 'lib/**/*.js'],
+        files: ['server.ts', 'lib/**/*.ts'],
         languageOptions: {
-            sourceType: 'commonjs',
+            sourceType: 'module',
             globals: {
                 require: 'readonly',
                 module: 'readonly',
@@ -58,6 +58,6 @@ export default [
         },
     },
     {
-        ignores: ['node_modules/', 'public/sw.js'],
+        ignores: ['node_modules/', 'dist/', 'public/sw.js'],
     },
 ];

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-const { checkContent, checkUsername, checkStory } = await import('../lib/wordfilter.js');
+const { checkContent, checkUsername, checkStory } = await import('../lib/wordfilter.ts');
 
 describe('wordfilter', () => {
     describe('checkContent', () => {

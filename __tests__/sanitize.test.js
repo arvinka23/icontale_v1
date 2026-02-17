@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 // Use dynamic import for CommonJS module
-const san = await import('../lib/sanitize.js');
+const san = await import('../lib/sanitize.ts');
 
 describe('sanitize', () => {
 

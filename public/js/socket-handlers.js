@@ -215,6 +215,35 @@ export function registerSocketHandlers(socket) {
     socket.on('game-over', (data) => {
         clearSession();
         showGameOver(data);
+
+        // If a replayId was returned, store it for the replay viewer
+        if (data.replayId) {
+            state.lastReplayId = data.replayId;
+        }
+    });
+
+    // ── Achievement Toasts ────────────────────────────────────
+
+    socket.on('achievement-unlocked', ({ achievements }) => {
+        if (!achievements || !Array.isArray(achievements)) return;
+        const container = document.getElementById('achievement-toasts');
+        if (!container) return;
+
+        for (const a of achievements) {
+            const toast = document.createElement('div');
+            toast.className = 'achievement-toast';
+            toast.innerHTML = `
+                <span class="toast-icon">${a.icon}</span>
+                <div class="toast-text">
+                    <span class="toast-title">Achievement freigeschaltet!</span>
+                    <span class="toast-name">${a.name}</span>
+                    <span class="toast-desc">${a.description}</span>
+                </div>
+            `;
+            container.appendChild(toast);
+            // Remove after animation
+            setTimeout(() => toast.remove(), 4200);
+        }
     });
 
     socket.on('back-to-lobby', ({ players, settings }) => {

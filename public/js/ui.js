@@ -615,6 +615,13 @@ export function showGameOver(data) {
     }
 
     dom.gameoverNewGameBtn.classList.toggle('hidden', !state.isHost);
+
+    // Show/hide replay button based on whether a replayId was provided
+    const replayBtn = document.getElementById('replay-btn');
+    if (replayBtn) {
+        replayBtn.classList.toggle('hidden', !data.replayId);
+    }
+
     playSuccess();
 }
 

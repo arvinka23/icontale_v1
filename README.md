@@ -107,15 +107,18 @@ A built-in **tutorial** is shown on first visit and can be reopened via the **?*
 | Layer | Technology |
 |---|---|
 | **Runtime** | Node.js >= 18 |
+| **Language** | TypeScript (server-side, strict mode) |
 | **Backend** | Express v4, Socket.io v4 |
+| **Database** | Redis (ioredis) — lobby persistence, sessions, achievements, replays |
 | **Frontend** | Vanilla HTML5, CSS3, ES Modules |
-| **Security** | Helmet, express-rate-limit, input sanitization |
+| **Security** | Helmet, express-rate-limit, input sanitization, word filter |
 | **Logging** | Pino (structured JSON logging) |
-| **Testing** | Vitest |
+| **Testing** | Vitest (89 tests: unit, integration, E2E) |
 | **Linting** | ESLint (flat config) + Prettier |
-| **CI/CD** | GitHub Actions |
-| **Container** | Docker + docker-compose |
-| **PWA** | Service Worker, Web App Manifest |
+| **CI/CD** | GitHub Actions (type-check, build, test, audit, Docker) |
+| **Container** | Docker + docker-compose (with Redis) |
+| **PWA** | Service Worker, Web App Manifest, PNG icons |
+| **Game Features** | Achievements (15), Replays, 4 game modes |
 
 ---
 
@@ -153,11 +156,12 @@ cp .env.example .env
 npm run dev
 ```
 
-Uses [nodemon](https://nodemon.io/) for automatic restarts on file changes.
+Uses [tsx](https://github.com/privatenumber/tsx) for TypeScript execution with auto-reload on file changes.
 
 ### Run in Production
 
 ```bash
+npm run build          # Compile TypeScript → dist/
 NODE_ENV=production npm start
 ```
 
@@ -165,33 +169,39 @@ NODE_ENV=production npm start
 
 | Script | Description |
 |---|---|
-| `npm start` | Start the server |
-| `npm run dev` | Start with auto-reload (nodemon) |
-| `npm test` | Run all tests (Vitest) |
+| `npm start` | Start compiled server (`dist/server.js`) |
+| `npm run dev` | Start with tsx watch (hot-reload) |
+| `npm run start:dev` | Start with tsx (no watch) |
+| `npm run build` | Compile TypeScript to `dist/` |
+| `npm test` | Run all 89 tests (Vitest) |
 | `npm run test:watch` | Run tests in watch mode |
+| `npm run test:coverage` | Run tests with coverage report |
 | `npm run lint` | Lint with ESLint |
 | `npm run format` | Format with Prettier |
 | `npm run build:css` | Minify CSS for production |
+| `npm run build:icons` | Generate PNG icons from canvas |
 | `npm run audit` | Security audit |
 
 ---
 
 ## Docker
 
-### Build and run
-
-```bash
-docker build -t icontale .
-docker run -p 3000:3000 icontale
-```
-
-### Using docker-compose
+### Using docker-compose (recommended)
 
 ```bash
 docker-compose up -d
 ```
 
-The container includes a health check at `/health`.
+This starts both the application and Redis with persistent storage, health checks, and automatic restart.
+
+### Build and run manually
+
+```bash
+docker build -t icontale .
+docker run -p 3000:3000 -e REDIS_URL=redis://your-redis:6379 icontale
+```
+
+> **Note:** Redis is a required dependency. The server will not start without a valid `REDIS_URL`.
 
 ---
 
@@ -199,20 +209,29 @@ The container includes a health check at `/health`.
 
 ```
 icontale_v1/
-├── server.js                  # Express + Socket.io server, game logic
+├── server.ts                  # Express + Socket.io server (TypeScript)
+├── tsconfig.json              # TypeScript configuration (strict mode)
 ├── lib/
-│   ├── logger.js              # Pino structured logging
-│   ├── sanitize.js            # Input validation & XSS protection
-│   └── scoring.js             # Scoring logic for all game modes
+│   ├── types.ts               # Shared type definitions
+│   ├── logger.ts              # Pino structured logging
+│   ├── sanitize.ts            # Input validation & XSS protection
+│   ├── scoring.ts             # Scoring logic for all game modes
+│   ├── wordfilter.ts          # Abuse prevention word filter
+│   ├── store.ts               # Redis-backed lobby/session persistence
+│   ├── achievements.ts        # 15-achievement system with stat tracking
+│   └── replay.ts              # Game recording & replay retrieval
+├── dist/                      # Compiled JavaScript (git-ignored)
+├── scripts/
+│   └── generate-icons.js      # PNG icon generator (canvas)
 ├── public/
 │   ├── index.html             # Single-page application
 │   ├── styles.css             # OKLCH design system, responsive
 │   ├── sw.js                  # Service Worker (PWA caching)
-│   ├── manifest.json          # PWA manifest
+│   ├── manifest.json          # PWA manifest (PNG icons)
 │   ├── favicon.ico            # Browser tab icon
-│   ├── icon-192.svg           # PWA icon 192x192
-│   ├── icon-512.svg           # PWA icon 512x512
-│   ├── icon-maskable.svg      # PWA maskable icon
+│   ├── icon-192.png           # PWA icon 192x192
+│   ├── icon-512.png           # PWA icon 512x512
+│   ├── icon-maskable.png      # PWA maskable icon
 │   ├── og-image.png           # Open Graph preview image
 │   ├── robots.txt             # Crawling rules
 │   ├── sitemap.xml            # XML sitemap
@@ -223,14 +242,22 @@ icontale_v1/
 │       ├── dom.js             # DOM references & utilities
 │       ├── ui.js              # UI rendering for all phases
 │       ├── sounds.js          # Optional WebAudio effects
-│       └── socket-handlers.js # Socket.io event handlers
+│       ├── socket-handlers.js # Socket.io event handlers
+│       └── replay.js          # Replay viewer modal
 ├── __tests__/
 │   ├── sanitize.test.js       # Input validation tests
-│   └── scoring.test.js        # Scoring logic tests
+│   ├── scoring.test.js        # Scoring logic tests
+│   ├── server-helpers.test.js # Derangement, room codes, ID replacement
+│   ├── wordfilter.test.js     # Word filter tests
+│   ├── store.test.js          # Redis store tests (mocked)
+│   ├── achievements.test.js   # Achievement system tests
+│   ├── integration.test.js    # Socket event integration tests
+│   ├── e2e.test.js            # End-to-end game flow tests
+│   └── test-server.js         # Shared test server helper
 ├── .github/workflows/
-│   └── ci.yml                 # GitHub Actions CI pipeline
-├── Dockerfile                 # Production container
-├── docker-compose.yml         # Container orchestration
+│   └── ci.yml                 # GitHub Actions CI (type-check, test, Docker)
+├── Dockerfile                 # Multi-stage production container
+├── docker-compose.yml         # App + Redis orchestration
 ├── .env.example               # Environment template
 ├── eslint.config.js           # ESLint flat config
 ├── .prettierrc                # Prettier config
@@ -239,7 +266,7 @@ icontale_v1/
 ├── railway.json               # Railway deployment
 ├── render.yaml                # Render deployment
 ├── CONTRIBUTING.md            # Contribution guidelines
-├── CHANGELOG.md               # Version history
+├── CHANGELOG.md               # Version history (v1, v2, v3)
 └── package.json
 ```
 
@@ -356,8 +383,8 @@ See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
 ## Known Limitations
 
-- **No persistence:** All game state is stored in memory. Restarting the server clears all active lobbies. Inactive lobbies are cleaned up after 30 minutes.
-- **Single instance only:** The in-memory architecture does not support horizontal scaling without a shared store (e.g. Redis).
+- **Redis recommended:** When `REDIS_URL` is set, lobbies, sessions, achievements, and replays are persisted in Redis. The server restores active lobbies on restart. Without Redis, an in-memory fallback is used and all state is lost on restart.
+- **Single instance only:** Horizontal scaling requires a shared store (Redis) **and** the Socket.io Redis adapter, which is not yet implemented.
 - **No authentication:** There is no user account system. Players are identified by session tokens during a single game.
 
 ---
