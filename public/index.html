@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="content-language" content="de">
     <title>IconTale – Kreatives Storytelling-Spiel</title>
 
     <!-- SEO -->
@@ -19,16 +20,19 @@
     <meta property="og:url" content="https://icontale.onrender.com/">
     <meta property="og:site_name" content="IconTale">
     <meta property="og:image" content="https://icontale.onrender.com/og-image.png">
+    <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="IconTale – Kreatives Storytelling-Spiel mit Emojis">
+    <meta property="og:image:secure_url" content="https://icontale.onrender.com/og-image.png">
     <meta property="og:locale" content="de_DE">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="IconTale – Kreatives Storytelling-Spiel">
     <meta name="twitter:description" content="Multiplayer-Storytelling mit Emojis. Schreibe, rate, gewinne!">
-    <meta name="twitter:image" content="https://icontale.onrender.com/og-image.png">
+    <meta name="twitter:image" content="https://icontale.onrender.com/og-image.webp">
+    <meta name="twitter:image:alt" content="IconTale – Kreatives Storytelling-Spiel mit Emojis">
 
     <!-- Favicon & PWA -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -68,10 +72,12 @@
     }
     </script>
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Fonts (self-hosted Inter, WOFF2 latin subset).
+         Preload only the two weights used above the fold: 400 (body)
+         and 700 (h1/h2). The rest is lazily picked up from styles.css. -->
+    <link rel="preload" href="/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/inter-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+    
 
     <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
@@ -81,9 +87,40 @@
 </head>
 <body>
     <noscript>
-        <div style="text-align:center;padding:3rem;font-family:sans-serif;">
-            <h1>IconTale</h1>
-            <p>Dieses Spiel benötigt JavaScript. Bitte aktiviere JavaScript in deinem Browser und lade die Seite neu.</p>
+        <div class="noscript-wrap">
+            <img
+                class="noscript-preview"
+                src="/og-image.webp"
+                alt="Vorschau: IconTale – Multiplayer-Storytelling mit Emojis"
+                width="600"
+                height="315"
+            >
+            <h1 class="noscript-title">IconTale</h1>
+            <p class="noscript-lead">
+                IconTale ist ein Multiplayer-Spiel in Echtzeit und braucht deshalb
+                <strong>JavaScript</strong>. Ohne JavaScript kann dein Browser
+                keine Lobby eröffnen, keine Geschichte einreichen und keine
+                Tipps verschicken.
+            </p>
+            <h2 class="noscript-sub">So geht&apos;s weiter</h2>
+            <ol class="noscript-steps">
+                <li>
+                    Aktiviere JavaScript in deinem Browser
+                    (<a href="https://www.enable-javascript.com/de/" rel="noopener external">enable-javascript.com</a>).
+                </li>
+                <li>Lade diese Seite neu.</li>
+                <li>Lies die Spielregeln im
+                    <a href="https://github.com/arvinka23/icontale_v1#how-to-play" rel="noopener external">README auf GitHub</a>,
+                    während du wartest.
+                </li>
+            </ol>
+            <p class="noscript-foot">
+                Wenn JavaScript schon aktiviert ist, prüf bitte deine
+                Browser-Erweiterungen (z.&nbsp;B. strenge Werbe- oder
+                Tracking-Blocker) &ndash; IconTale braucht nur Ressourcen von
+                dieser Domain und spricht nur über die eigene WebSocket-
+                Verbindung.
+            </p>
         </div>
     </noscript>
 
@@ -456,11 +493,6 @@
     </div>
 
     <script type="module" src="js/main.js"></script>
-    <script>
-        // Service Worker registrieren (PWA-Unterstützung)
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(() => {});
-        }
-    </script>
+    <script src="js/sw-register.js" defer></script>
 </body>
 </html>

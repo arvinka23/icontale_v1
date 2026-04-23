@@ -4,6 +4,45 @@
    Default theme: Dark
    ═══════════════════════════════════════════════════════════════ */
 
+/* ── 0. Fonts (self-hosted Inter, latin subset) ──────────────
+   Only regular weights are subset here. Italic and other scripts
+   are not shipped to keep the bundle small. */
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/inter-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('/fonts/inter-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('/fonts/inter-latin-600-normal.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('/fonts/inter-latin-700-normal.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 800;
+    font-display: swap;
+    src: url('/fonts/inter-latin-800-normal.woff2') format('woff2');
+}
+
 /* ── 1. Color Tokens ──────────────────────────────────────── */
 :root {
     /* Hue: 280 = purple. Chroma: subtle for neutrals, strong for primary. */
@@ -1972,4 +2011,71 @@ textarea:focus-visible {
     border-radius: var(--radius-sm);
 }
 
-} 
+
+/* ── 14. <noscript> fallback ──────────────────────────────── */
+
+.noscript-wrap {
+    max-width: 640px;
+    margin: 2rem auto;
+    padding: var(--space-xl);
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1.6;
+    text-align: left;
+}
+
+.noscript-preview {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 600px;
+    margin: 0 auto var(--space-lg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+}
+
+.noscript-title {
+    font-size: 2rem;
+    text-align: center;
+    margin-bottom: var(--space-sm);
+    color: var(--text-strong);
+}
+
+.noscript-sub {
+    font-size: 1.15rem;
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-sm);
+    color: var(--text-strong);
+}
+
+.noscript-lead {
+    margin-bottom: var(--space-md);
+}
+
+.noscript-steps {
+    margin: 0 0 var(--space-lg) 1.25rem;
+}
+
+.noscript-steps li {
+    margin-bottom: var(--space-sm);
+}
+
+.noscript-steps a,
+.noscript-foot a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
+}
+
+.noscript-foot {
+    margin-top: var(--space-md);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    border-top: 1px dashed var(--border);
+    padding-top: var(--space-md);
+}
