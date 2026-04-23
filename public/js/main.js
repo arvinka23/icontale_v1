@@ -12,6 +12,7 @@ import {
 import { loadSoundPreference, toggleSound, playClick } from './sounds.js';
 import { registerSocketHandlers } from './socket-handlers.js';
 import { openReplay } from './replay.js';
+import { initTheme } from './theme.js';
 
 // ── Socket.io (loaded globally via <script> tag) ────────────
 const socket = window.io({
@@ -140,6 +141,7 @@ dom.roomCodeInput.addEventListener('keydown', (e) => {
 });
 
 // ── Initialization ──────────────────────────────────────────
+initTheme();
 loadUserEmoji();
 loadSoundPreference();
 setTab('create');

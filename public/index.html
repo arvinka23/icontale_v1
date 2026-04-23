@@ -82,6 +82,9 @@
     <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
 
+    <!-- Theme pre-paint (sets data-theme before first paint) -->
+    <script src="/js/theme-preload.js"></script>
+
     <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
 </head>
@@ -128,7 +131,10 @@
         <header class="game-header">
             <h1>IconTale</h1>
             <p class="game-subtitle">Kreative Geschichten mit Emojis!</p>
-            <button id="help-btn" class="help-btn" title="Anleitung anzeigen" aria-label="Anleitung öffnen">?</button>
+            <div class="header-tools">
+                <button id="theme-toggle" class="icon-btn" type="button" aria-label="Theme wechseln" title="Theme wechseln">🌙</button>
+                <button id="help-btn" class="icon-btn help-btn" type="button" title="Anleitung anzeigen" aria-label="Anleitung öffnen">?</button>
+            </div>
         </header>
 
         <main class="game-content">

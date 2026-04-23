@@ -25,6 +25,8 @@ const SHELL_ASSETS = [
     '/js/replay.js',
     '/js/sw-register.js',
     '/js/toast.js',
+    '/js/theme.js',
+    '/js/theme-preload.js',
     '/manifest.json',
     '/favicon.ico',
     '/icon-192.png',
