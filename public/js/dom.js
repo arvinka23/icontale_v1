@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { state } from './state.js';
+import { toastError } from './toast.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -24,6 +25,8 @@ export const dom = {
     // Lobby
     lobby:          $('lobby'),
     roomCode:       $('room-code'),
+    copyCodeBtn:    $('copy-code-btn'),
+    copyLinkBtn:    $('copy-link-btn'),
     playersGrid:    $('players-grid'),
     startGame:      $('start-game'),
     startHint:      $('start-hint'),
@@ -48,6 +51,7 @@ export const dom = {
     writingSection:    $('writing-section'),
     writingTimerTime:  $('writing-timer-time'),
     writingTimerBar:   $('writing-timer-bar'),
+    writingTimerAnnounce: $('writing-timer-announce'),
     writingEmojis:     $('writing-emojis'),
     writingStory:      $('writing-story'),
     writingFinishBtn:  $('writing-finish-btn'),
@@ -98,7 +102,6 @@ export const dom = {
     spectatorContent:   $('spectator-content'),
 
     // Global
-    errorMessage:   $('error-message'),
     tutorialModal:  $('tutorial-modal'),
     tutorialClose:  $('tutorial-close'),
     tutorialStart:  $('tutorial-start-btn'),
@@ -119,18 +122,14 @@ export function hideAllSections() {
     }
 }
 
-/** Show a temporary error/info message. */
+/**
+ * Show a short error message.
+ * Thin shim kept for backwards compatibility with existing call sites.
+ * New code should import `toastInfo` / `toastSuccess` / `toastError`
+ * directly from './toast.js' so the intent is visible.
+ */
 export function showError(message) {
-    if (state.errorTimeout) clearTimeout(state.errorTimeout);
-
-    dom.errorMessage.textContent = message;
-    dom.errorMessage.classList.remove('hidden');
-    dom.errorMessage.style.animation = 'slideInDown 0.3s ease';
-
-    state.errorTimeout = setTimeout(() => {
-        dom.errorMessage.classList.add('hidden');
-        state.errorTimeout = null;
-    }, 5000);
+    toastError(message);
 }
 
 /** Count words in a string. */

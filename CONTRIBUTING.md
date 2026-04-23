@@ -62,10 +62,10 @@ All tests must pass before a pull request can be merged.
 
 | Directory | Purpose |
 |---|---|
-| `server.js` | Express & Socket.io server |
-| `lib/` | Server-side modules (logging, validation, scoring) |
+| `server.ts` | Express & Socket.io server (compiled to `dist/server.js`) |
+| `lib/` | Server-side modules (logging, validation, scoring, store, etc.) |
 | `public/js/` | Client-side ES modules |
-| `public/` | Static assets (HTML, CSS, icons) |
+| `public/` | Static assets (HTML, CSS, icons, fonts) |
 | `__tests__/` | Vitest test files |
 
 ## Commit Messages

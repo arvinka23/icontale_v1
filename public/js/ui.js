@@ -4,8 +4,9 @@
 
 import { EMOJIS, EMOJI_NAMES, MODE_DESCRIPTIONS } from './constants.js';
 import { state, Phase, setPhase, forcePhase, resetGameState } from './state.js';
-import { dom, hideAllSections, showError, countWords, formatTime, typeText } from './dom.js';
+import { dom, hideAllSections, formatTime, typeText } from './dom.js';
 import { playClick, playSuccess, playTick } from './sounds.js';
+import { enhanceRadioGroup } from './radio-nav.js';
 
 // ── Emoji Selection ─────────────────────────────────────────
 
@@ -55,6 +56,11 @@ export function setTab(tab) {
 // ── Settings UI ─────────────────────────────────────────────
 
 export function initSettingsUI(emitFn) {
+    for (const id of ['mode-options', 'timer-options', 'wordlimit-options', 'emojicount-options', 'rounds-options']) {
+        const el = document.getElementById(id);
+        if (el) enhanceRadioGroup(el, '.setting-btn');
+    }
+
     setupSettingGroup('mode-options', val => {
         dom.modeDesc.textContent = MODE_DESCRIPTIONS[val] || '';
         if (val === 'speed') {
@@ -271,6 +277,12 @@ export function showWritingPhase(emojis, writingStartTime, settings, round, tota
     dom.writingSection.classList.remove('writing-finished');
     dom.wordCount.textContent = '0';
 
+    // Restore any draft the player typed before an accidental reload.
+    // Dynamic import keeps ui.js <-> main.js out of a static cycle.
+    import('./main.js').then((m) => {
+        if (typeof m.restoreDraftIfAny === 'function') m.restoreDraftIfAny();
+    }).catch(() => { /* no draft helper available, e.g. stale cache */ });
+
     // Progress
     dom.writingProgress.classList.remove('hidden');
     dom.storiesSubmitted.textContent = '0';
@@ -280,14 +292,16 @@ export function showWritingPhase(emojis, writingStartTime, settings, round, tota
     const timerDuration = settings.timerDuration || 180;
     const start = writingStartTime || Date.now();
     state.writingTimeLeft = Math.max(0, timerDuration - Math.floor((Date.now() - start) / 1000));
+    state.writingMilestonesAnnounced = new Set();
     updateWritingTimer(timerDuration);
 
     if (state.writingTimer) clearInterval(state.writingTimer);
     state.writingTimer = setInterval(() => {
+        const prev = state.writingTimeLeft;
         state.writingTimeLeft = Math.max(0, timerDuration - Math.floor((Date.now() - start) / 1000));
         updateWritingTimer(timerDuration);
+        announceTimerMilestones(prev, state.writingTimeLeft);
 
-        // Tick sound in last 10 seconds
         if (state.writingTimeLeft <= 10 && state.writingTimeLeft > 0) playTick();
 
         if (state.writingTimeLeft <= 0) {
@@ -302,8 +316,42 @@ export function showWritingPhase(emojis, writingStartTime, settings, round, tota
 function updateWritingTimer(total) {
     dom.writingTimerTime.textContent = formatTime(state.writingTimeLeft);
     const pct = Math.max(0, state.writingTimeLeft / total);
-    dom.writingTimerBar.style.height = `${pct * 100}%`;
+    // Use a CSS custom property so the same JS works for both axes:
+    // desktop animates height (vertical bar), mobile animates width
+    // (horizontal bar). See .timer-bar-inner rules in styles.css.
+    const pctCss = `${pct * 100}%`;
+    dom.writingTimerBar.style.setProperty('--timer-pct', pctCss);
     dom.writingTimerTime.classList.toggle('timer-urgent', state.writingTimeLeft <= 30);
+
+    const bar = dom.writingTimerBar?.parentElement;
+    if (bar && bar.getAttribute('role') === 'progressbar') {
+        bar.setAttribute('aria-valuenow', Math.round(pct * 100));
+    }
+}
+
+// Milestones at which we announce the remaining time to assistive tech.
+// Chosen so that sighted users see the countdown every second while
+// screen readers only hear informative breakpoints and the final cue.
+const TIMER_MILESTONES = [60, 30, 10, 5];
+
+function announceTimerMilestones(prev, now) {
+    if (!dom.writingTimerAnnounce) return;
+    const announced = state.writingMilestonesAnnounced ?? new Set();
+
+    for (const m of TIMER_MILESTONES) {
+        if (prev > m && now <= m && !announced.has(m)) {
+            announced.add(m);
+            dom.writingTimerAnnounce.textContent = `Noch ${m} Sekunden zum Schreiben.`;
+            state.writingMilestonesAnnounced = announced;
+            return;
+        }
+    }
+
+    if (prev > 0 && now === 0 && !announced.has(0)) {
+        announced.add(0);
+        dom.writingTimerAnnounce.textContent = 'Zeit abgelaufen.';
+        state.writingMilestonesAnnounced = announced;
+    }
 }
 
 // ── Guess Phase ─────────────────────────────────────────────
@@ -326,38 +374,57 @@ export function showGuessPhase(data, socket) {
     } else {
         dom.emojiGuessGroup.classList.remove('hidden');
         dom.emojiOptions.innerHTML = '';
-        data.emojiOptions.forEach(combo => {
+        data.emojiOptions.forEach((combo, idx) => {
             const btn = document.createElement('button');
+            btn.type = 'button';
             btn.textContent = combo.join(' ');
             btn.className = 'guess-emoji-btn';
+            btn.setAttribute('role', 'radio');
+            btn.setAttribute('aria-checked', 'false');
+            btn.tabIndex = idx === 0 ? 0 : -1;
             btn.onclick = () => {
                 if (state.guessSubmitted) return;
-                dom.emojiOptions.querySelectorAll('.guess-emoji-btn').forEach(b => b.classList.remove('selected'));
+                dom.emojiOptions.querySelectorAll('.guess-emoji-btn').forEach(b => {
+                    b.classList.remove('selected');
+                    b.setAttribute('aria-checked', 'false');
+                });
                 btn.classList.add('selected');
+                btn.setAttribute('aria-checked', 'true');
                 state.selectedEmojiCombo = combo;
                 playClick();
                 updateGuessButton();
             };
             dom.emojiOptions.appendChild(btn);
         });
+        enhanceRadioGroup(dom.emojiOptions, '.guess-emoji-btn');
     }
 
     // Players
     dom.playerOptions.innerHTML = '';
-    data.players.forEach(player => {
+    data.players.forEach((player, idx) => {
         const btn = document.createElement('button');
+        btn.type = 'button';
         btn.innerHTML = `<span class="guess-player-emoji-inline">${player.emoji || '😀'}</span> <span>${player.name}</span>`;
         btn.className = 'guess-player-btn';
+        btn.setAttribute('role', 'radio');
+        btn.setAttribute('aria-checked', 'false');
+        btn.setAttribute('aria-label', `${player.name}`);
+        btn.tabIndex = idx === 0 ? 0 : -1;
         btn.onclick = () => {
             if (state.guessSubmitted) return;
-            dom.playerOptions.querySelectorAll('.guess-player-btn').forEach(b => b.classList.remove('selected'));
+            dom.playerOptions.querySelectorAll('.guess-player-btn').forEach(b => {
+                b.classList.remove('selected');
+                b.setAttribute('aria-checked', 'false');
+            });
             btn.classList.add('selected');
+            btn.setAttribute('aria-checked', 'true');
             state.selectedPlayerId = player.id;
             playClick();
             updateGuessButton();
         };
         dom.playerOptions.appendChild(btn);
     });
+    enhanceRadioGroup(dom.playerOptions, '.guess-player-btn');
 
     dom.submitGuess.disabled = true;
     dom.submitGuess.innerHTML = '<span class="btn-icon">🎯</span> Tipp abgeben';
@@ -638,13 +705,23 @@ export function showSpectatorView(info) {
 
 // ── Tutorial ────────────────────────────────────────────────
 
+let tutorialTrap = null;
+
 export function showTutorial() {
     dom.tutorialModal.classList.remove('hidden');
+    // Late import avoids a circular dependency at module init time.
+    import('./focus-trap.js').then(({ activateFocusTrap }) => {
+        tutorialTrap = activateFocusTrap(dom.tutorialModal, { onEscape: hideTutorial });
+    });
 }
 
 export function hideTutorial() {
     dom.tutorialModal.classList.add('hidden');
     localStorage.setItem('icontale_tutorial_seen', 'true');
+    if (tutorialTrap) {
+        tutorialTrap.release();
+        tutorialTrap = null;
+    }
 }
 
 // ── Team Scores (shared renderer) ───────────────────────────

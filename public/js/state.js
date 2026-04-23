@@ -53,6 +53,7 @@ export const state = {
     // Timers (stored so they can be cleaned up)
     writingTimer:    null,
     writingTimeLeft: 180,
+    writingMilestonesAnnounced: null, // Set<number>; lazily initialised
     typeTextTimers:  [],  // Track typeText intervals for cleanup
     errorTimeout:    null,
 };

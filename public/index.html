@@ -82,6 +82,9 @@
     <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
 
+    <!-- Theme pre-paint (sets data-theme before first paint) -->
+    <script src="/js/theme-preload.js"></script>
+
     <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
 </head>
@@ -128,7 +131,10 @@
         <header class="game-header">
             <h1>IconTale</h1>
             <p class="game-subtitle">Kreative Geschichten mit Emojis!</p>
-            <button id="help-btn" class="help-btn" title="Anleitung anzeigen" aria-label="Anleitung öffnen">?</button>
+            <div class="header-tools">
+                <button id="theme-toggle" class="icon-btn" type="button" aria-label="Theme wechseln" title="Theme wechseln">🌙</button>
+                <button id="help-btn" class="icon-btn help-btn" type="button" title="Anleitung anzeigen" aria-label="Anleitung öffnen">?</button>
+            </div>
         </header>
 
         <main class="game-content">
@@ -174,6 +180,14 @@
             <section id="lobby" class="lobby-section hidden" aria-label="Lobby">
                 <div class="lobby-header">
                     <h2 class="lobby-title">Lobby <span id="room-code" class="room-code"></span></h2>
+                    <div class="lobby-share">
+                        <button id="copy-code-btn" class="secondary-btn lobby-share-btn" type="button" aria-label="Lobby-Code in die Zwischenablage kopieren">
+                            <span class="btn-icon">📋</span> Code kopieren
+                        </button>
+                        <button id="copy-link-btn" class="secondary-btn lobby-share-btn" type="button" aria-label="Einladungslink in die Zwischenablage kopieren">
+                            <span class="btn-icon">🔗</span> Link kopieren
+                        </button>
+                    </div>
                     <p class="lobby-subtitle">Warte auf Spieler...</p>
                     <div id="spectator-count" class="spectator-count hidden" aria-live="polite">
                         <span class="btn-icon">👁️</span> <span id="spectator-num">0</span> Zuschauer
@@ -276,9 +290,11 @@
                             <div class="timer-time" id="writing-timer-time" aria-live="off">03:00</div>
                             <div class="timer-label">Verbleibend</div>
                         </div>
-                        <div class="timer-bar-outer" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+                        <div class="timer-bar-outer" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" aria-label="Verbleibende Schreibzeit">
                             <div class="timer-bar-inner" id="writing-timer-bar"></div>
                         </div>
+                        <!-- Screen-reader-only milestone announcements (60/30/10/5s and time-up). -->
+                        <div id="writing-timer-announce" class="sr-only" aria-live="polite" aria-atomic="true"></div>
                     </div>
 
                     <div class="writing-main">
@@ -402,8 +418,6 @@
 
         </main>
 
-        <!-- Fehlermeldungen -->
-        <div id="error-message" class="error-message hidden" role="alert" aria-live="assertive"></div>
     </div>
 
     <!-- ── Anleitung ──────────────────────────────────────── -->
@@ -476,6 +490,12 @@
 
     <!-- Achievement Toast Container -->
     <div id="achievement-toasts" aria-live="polite" aria-label="Achievements"></div>
+
+    <!-- General notification toasts (info/success/error) -->
+    <div id="toast-stack" class="toast-stack" aria-label="Benachrichtigungen">
+        <div class="toast-region toast-region-status" role="status" aria-live="polite"></div>
+        <div class="toast-region toast-region-alert" role="alert" aria-live="assertive" aria-atomic="true"></div>
+    </div>
 
     <!-- Replay Viewer Modal -->
     <div id="replay-modal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Replay Viewer">

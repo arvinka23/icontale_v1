@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 
-// We can't import server.js directly (it starts a listener),
-// so we test the logic patterns used in server.js.
+// We can't import server.ts directly (it starts a listener),
+// so we test the logic patterns used in server.ts.
 
 describe('server helper patterns', () => {
 

@@ -99,9 +99,41 @@
     --duration: 0.2s;
 }
 
-/* Light mode — flip lightness, swap bg order */
+/* Light theme tokens.
+   The same override set is applied in two cases:
+     1. The user explicitly picked light   -> :root[data-theme='light']
+     2. No explicit choice yet AND the OS  -> :root:not([data-theme])
+        reports prefers-color-scheme: light   combined with @media.
+   JS (public/js/theme.js) normally sets data-theme on boot, so the
+   @media rule is only relevant for the brief moment before JS runs
+   and for users who disabled JS entirely. */
+:root[data-theme='light'] {
+    --bg-dark:   oklch(0.93 0.008 280);
+    --bg-base:   oklch(0.97 0.005 280);
+    --bg-light:  oklch(1.00 0 0);
+
+    --text-strong: oklch(0.16 0.015 280);
+    --text:        oklch(0.35 0.012 280);
+    --text-muted:  oklch(0.52 0.008 280);
+
+    --border:    oklch(0.88 0.008 280);
+    --highlight: oklch(0.98 0.004 280);
+
+    --primary:       oklch(0.52 0.220 280);
+    --primary-hover: oklch(0.45 0.220 280);
+    --primary-soft:  oklch(0.93 0.035 280);
+    --primary-text:  oklch(0.99 0 0);
+
+    --error-soft: oklch(0.95 0.030 25);
+
+    --shadow-xs: 0 1px 2px oklch(0 0 0 / 0.06);
+    --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.08), 0 4px 8px oklch(0 0 0 / 0.04);
+    --shadow-md: 0 2px 6px oklch(0 0 0 / 0.08), 0 8px 24px oklch(0 0 0 / 0.06);
+    --shadow-lg: 0 4px 12px oklch(0 0 0 / 0.10), 0 16px 48px oklch(0 0 0 / 0.08);
+}
+
 @media (prefers-color-scheme: light) {
-    :root {
+    :root:not([data-theme]) {
         --bg-dark:   oklch(0.93 0.008 280);
         --bg-base:   oklch(0.97 0.005 280);
         --bg-light:  oklch(1.00 0 0);
@@ -321,12 +353,18 @@ textarea {
     margin-top: var(--space-xs);
 }
 
-.help-btn {
+.header-tools {
     position: absolute;
     top: var(--space-lg);
     right: var(--space-lg);
+    display: flex;
+    gap: var(--space-xs);
+}
+
+.icon-btn {
     width: 36px;
     height: 36px;
+    min-width: 36px;
     border-radius: var(--radius-full);
     background: var(--bg-light);
     color: var(--text-muted);
@@ -337,14 +375,18 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: center;
+    line-height: 1;
 }
 
-.help-btn:hover {
+.icon-btn:hover {
     background: var(--primary-soft);
     color: var(--primary);
     border-color: var(--primary);
     transform: none;
 }
+
+/* Legacy selector kept for the help button's long-standing class */
+.help-btn { position: static; }
 
 
 /* ── Tabs ─────────────────────────────────────────────────── */
@@ -522,6 +564,19 @@ textarea {
     margin-top: var(--space-sm);
 }
 
+.lobby-share {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+    margin-top: var(--space-sm);
+}
+
+.lobby-share-btn {
+    font-size: 0.85rem;
+    padding: 0.45rem 0.9rem;
+}
+
 /* Players Grid */
 .lobby-players-grid {
     display: grid;
@@ -658,10 +713,10 @@ textarea {
 .timer-bar-inner {
     width: 100%;
     background: var(--primary);
-    height: 100%;
+    height: var(--timer-pct, 100%);
     border-radius: var(--radius-lg);
-    transition: height 1s linear;
-    will-change: height;
+    transition: height 1s linear, width 1s linear;
+    will-change: height, width;
 }
 
 .writing-main {
@@ -1567,21 +1622,6 @@ textarea {
 }
 
 
-/* ── Error Message ────────────────────────────────────────── */
-.error-message {
-    color: var(--error);
-    font-weight: 500;
-    font-size: 0.95rem;
-    margin-top: var(--space-md);
-    padding: 0.75rem 1rem;
-    background: var(--error-soft);
-    border: 1px solid oklch(from var(--error) l c h / 0.2);
-    border-radius: var(--radius-md);
-    text-align: center;
-    animation: fadeIn 0.3s var(--ease);
-}
-
-
 /* ── 7. Animations ────────────────────────────────────────── */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(8px); }
@@ -2012,7 +2052,95 @@ textarea:focus-visible {
 }
 
 
-/* ── 14. <noscript> fallback ──────────────────────────────── */
+/* ── 14. Toast notifications ──────────────────────────────── */
+
+.toast-stack {
+    position: fixed;
+    top: var(--space-lg);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    max-width: calc(100vw - 2 * var(--space-lg));
+    width: max-content;
+    z-index: 10001;
+    pointer-events: none;
+}
+
+.toast-region {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 0.7rem 1rem;
+    min-width: 220px;
+    max-width: 420px;
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--text-strong);
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    pointer-events: auto;
+    animation: toast-enter 0.25s var(--ease);
+    will-change: transform, opacity;
+}
+
+.toast-info {
+    border-left: 4px solid var(--primary);
+}
+
+.toast-success {
+    border-left: 4px solid var(--success);
+}
+
+.toast-error {
+    color: var(--text-strong);
+    background: var(--error-soft);
+    border: 1px solid oklch(from var(--error) l c h / 0.35);
+    border-left: 4px solid var(--error);
+}
+
+.toast-emoji {
+    font-size: 1.15rem;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.toast-message {
+    flex: 1;
+    word-break: break-word;
+}
+
+.toast-leaving {
+    animation: toast-leave 0.25s var(--ease) forwards;
+}
+
+@keyframes toast-enter {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toast-leave {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .toast { animation: none; }
+    .toast-leaving { animation: none; }
+}
+
+/* ── 15. <noscript> fallback ──────────────────────────────── */
 
 .noscript-wrap {
     max-width: 640px;
