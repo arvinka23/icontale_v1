@@ -1,0 +1,8 @@
+# Husky pre-commit hook
+#
+# Runs lint-staged which in turn only touches the files that are
+# actually staged. Keep this file tiny — heavier checks belong in
+# CI so a slow pre-commit never tempts contributors to bypass the
+# hook with --no-verify.
+
+npx lint-staged --concurrent false
