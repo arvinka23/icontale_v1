@@ -14,16 +14,40 @@ import { registerSocketHandlers } from './socket-handlers.js';
 import { openReplay } from './replay.js';
 import { initTheme } from './theme.js';
 
-// ── Socket.io (loaded globally via <script> tag) ────────────
+// ── Socket.io ───────────────────────────────────────────────
+// Fetch a short-lived handshake token before the WebSocket upgrade
+// so the server can verify that whoever is connecting actually
+// loaded the page first. If the fetch fails (offline, proxy error)
+// we still try to connect; the server logs the missing token and
+// — unless ENFORCE_SOCKET_AUTH is set — accepts the connection so
+// the existing UX continues to work.
+async function fetchSocketToken() {
+    try {
+        const res = await fetch('/api/socket-token', { credentials: 'same-origin' });
+        if (!res.ok) return '';
+        const data = await res.json();
+        return typeof data.token === 'string' ? data.token : '';
+    } catch (_) {
+        return '';
+    }
+}
+
 const socket = window.io({
     reconnection: true,
     reconnectionAttempts: 10,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
+    autoConnect: false,
+    auth: (cb) => {
+        fetchSocketToken().then((token) => cb({ token }));
+    },
 });
 
 // Register all socket event handlers
 registerSocketHandlers(socket);
+
+// Now that handlers are wired, kick off the connect.
+socket.connect();
 
 // ── Settings Emit ───────────────────────────────────────────
 function emitSettings() {
