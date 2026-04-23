@@ -5,6 +5,12 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 require('dotenv').config();
 
+// Sentry must initialise before any instrumentation hooks can be
+// registered (HTTP request capture, express middleware). Keep this
+// at the very top of the file.
+import * as sentry from './lib/sentry';
+sentry.initSentry({ version: process.env.npm_package_version });
+
 import crypto from 'crypto';
 import express from 'express';
 import http from 'http';
@@ -18,6 +24,12 @@ import * as san from './lib/sanitize';
 import * as filter from './lib/wordfilter';
 import { calculateTeamScores } from './lib/scoring';
 import * as store from './lib/store';
+import {
+    registerCounter,
+    registerGauge,
+    registerSnapshotGauge,
+    renderMetrics,
+} from './lib/metrics';
 import { updateStatsAndCheck, ACHIEVEMENTS } from './lib/achievements';
 import { recordEvent, finalizeReplay, getReplay } from './lib/replay';
 import { getRandomEmojis } from './lib/emoji-packs';
@@ -130,15 +142,118 @@ app.use((_req, res, next) => {
 app.use(express.static('public'));
 app.use(express.json({ limit: '1mb' }));
 
-// Health check
+// ── Metrics ─────────────────────────────────────────────────
+//
+// All counters live alongside the code that increments them, but
+// the gauges are defined once here so the /metrics endpoint always
+// exposes them even before the first event occurs.
+
+const metricSocketEvents = registerCounter(
+    'icontale_socket_events_total',
+    'Accepted Socket.io events by name',
+    ['event']
+);
+const metricSocketErrors = registerCounter(
+    'icontale_socket_errors_total',
+    'Socket.io events rejected by the middleware, by reason',
+    ['reason']
+);
+const metricLobbyEvents = registerCounter(
+    'icontale_lobby_events_total',
+    'Lobby lifecycle events',
+    ['type']
+);
+const metricStoriesSubmitted = registerCounter(
+    'icontale_stories_submitted_total',
+    'Stories successfully submitted by players'
+);
+const metricGuessesSubmitted = registerCounter(
+    'icontale_guesses_submitted_total',
+    'Guesses successfully submitted by players'
+);
+const metricConnectedSockets = registerGauge(
+    'icontale_connected_sockets',
+    'Sockets currently connected to this node'
+);
+
+// Snapshot gauges read from authoritative storage (Redis) at scrape
+// time so restarts cannot leave stale values behind.
+registerSnapshotGauge(
+    'icontale_lobbies_active',
+    'Active lobbies known to the store',
+    () => store.getLobbyCount()
+);
+registerSnapshotGauge(
+    'icontale_process_uptime_seconds',
+    'Process uptime in seconds',
+    () => process.uptime()
+);
+registerSnapshotGauge(
+    'icontale_heap_bytes',
+    'V8 heapUsed in bytes',
+    () => process.memoryUsage().heapUsed
+);
+
+// Health check.
+//
+// Returns a small JSON blob covering the liveness (process alive),
+// readiness (Redis reachable) and capacity (lobby count, heap) of
+// this node. Failures never throw — a /health that crashes is worse
+// than one returning degraded info. The response code reflects the
+// worst component:
+//    200 ok         everything healthy.
+//    503 degraded   Redis or store layer is unreachable.
 app.get('/health', async (_req, res) => {
-    const count = await store.getLobbyCount();
-    res.json({
+    const started = Date.now();
+    const mem = process.memoryUsage();
+    const status: {
+        status: 'ok' | 'degraded';
+        uptime: number;
+        timestamp: string;
+        version: string;
+        node: string;
+        lobbies: number | null;
+        redis: 'ok' | 'error' | 'unknown';
+        heap: { used: number; total: number };
+        checkMs: number;
+    } = {
         status: 'ok',
         uptime: process.uptime(),
-        lobbies: count,
         timestamp: new Date().toISOString(),
-    });
+        version: process.env.npm_package_version ?? 'unknown',
+        node: process.version,
+        lobbies: null,
+        redis: 'unknown',
+        heap: { used: mem.heapUsed, total: mem.heapTotal },
+        checkMs: 0,
+    };
+
+    try {
+        const count = await store.getLobbyCount();
+        status.lobbies = count;
+        status.redis = 'ok';
+    } catch (err) {
+        log.warn({ err }, 'health: store probe failed');
+        status.redis = 'error';
+        status.status = 'degraded';
+    }
+
+    status.checkMs = Date.now() - started;
+    res.status(status.status === 'ok' ? 200 : 503).json(status);
+});
+
+// Prometheus scrape endpoint. Intentionally NOT behind auth because
+// most scrape setups run inside the cluster; if you expose this
+// publicly, restrict it at the reverse proxy.
+app.get('/metrics', async (_req, res) => {
+    try {
+        const body = await renderMetrics();
+        res.setHeader('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+        res.send(body);
+    } catch (err) {
+        log.error({ err }, 'Failed to render metrics');
+        res.status(500).send('# metrics unavailable\n');
+    }
 });
 
 // Replay route
@@ -147,6 +262,11 @@ app.get('/replay/:id', async (req, res) => {
     if (!replay) return res.status(404).json({ error: 'Replay not found' });
     res.json(replay);
 });
+
+// Sentry express error handler must come after every route and
+// before the catch-all 500 handler (if any). No-op when Sentry is
+// disabled via absent SENTRY_DSN.
+sentry.attachExpressErrorHandler(app);
 
 // ── Socket.io setup ─────────────────────────────────────────
 
@@ -264,6 +384,7 @@ setInterval(() => {
             clearLobbyTimers(lobby);
             delete lobbies[code];
             io.to(code).emit('lobby-closed', { reason: 'Inactivity timeout.' });
+            metricLobbyEvents.inc({ type: 'closed_inactive' });
             cleaned++;
         }
     }
@@ -303,11 +424,16 @@ const deps: GameFlowDeps = {
 
 io.on('connection', (socket: Socket) => {
     log.info({ socketId: socket.id }, 'Client connected');
+    metricConnectedSockets.inc();
 
     socket.use(([event], next) => {
         if (!checkSocketRate(socket.id)) {
             log.warn({ socketId: socket.id, event }, 'Socket rate limited');
+            metricSocketErrors.inc({ reason: 'rate_limited' });
             return next(new Error('Rate limited'));
+        }
+        if (typeof event === 'string') {
+            metricSocketEvents.inc({ event });
         }
         next();
     });
@@ -491,6 +617,7 @@ io.on('connection', (socket: Socket) => {
                 players: lobbies[roomCode]!.players,
                 settings: merged,
             });
+            metricLobbyEvents.inc({ type: 'created' });
             io.to(roomCode).emit('players-update', lobbies[roomCode]!.players);
         } catch (err) {
             log.error({ err, socketId: socket.id }, 'Error in create-lobby');
@@ -556,6 +683,7 @@ io.on('connection', (socket: Socket) => {
                     players: lobby.players,
                     settings: lobby.settings,
                 });
+                metricLobbyEvents.inc({ type: 'joined' });
                 io.to(cResult.value).emit('players-update', lobby.players);
             } catch (err) {
                 log.error({ err, socketId: socket.id }, 'Error in join-lobby');
@@ -712,6 +840,7 @@ io.on('connection', (socket: Socket) => {
 
             lobby.stories[socket.id] = result.value;
             lobby.lastActivity = Date.now();
+            metricStoriesSubmitted.inc();
 
             // Achievement: track story stats (speed-demon, minimalist, novelist)
             const wordCount = result.value.split(/\s+/).filter(Boolean).length;
@@ -760,6 +889,7 @@ io.on('connection', (socket: Socket) => {
 
             lobby.guesses[socket.id] = { guess };
             lobby.lastActivity = Date.now();
+            metricGuessesSubmitted.inc();
 
             // Record replay event for guess
             recordEvent(lobby, 'guess-submit', { playerId: socket.id });
@@ -966,6 +1096,7 @@ io.on('connection', (socket: Socket) => {
     socket.on('disconnect', (reason: string) => {
         log.info({ socketId: socket.id, reason }, 'Client disconnected');
         socketRateLimits.delete(socket.id);
+        metricConnectedSockets.dec();
 
         for (const code in lobbies) {
             const lobby = lobbies[code]!;
@@ -1145,11 +1276,13 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 process.on('uncaughtException', (err: Error) => {
     log.fatal({ err }, 'Uncaught exception');
+    sentry.captureException(err);
     gracefulShutdown('uncaughtException');
 });
 
 process.on('unhandledRejection', (reason: unknown) => {
     log.error({ reason }, 'Unhandled rejection');
+    sentry.captureException(reason);
 });
 
 // ── Start server ────────────────────────────────────────────
