@@ -119,6 +119,14 @@ app.use(
     })
 );
 
+// Advertise the primary content language so browsers and crawlers can
+// pick the right hreflang / spell-checker / screen-reader locale.
+// Keep this in sync with <html lang> in public/index.html.
+app.use((_req, res, next) => {
+    res.setHeader('Content-Language', 'de');
+    next();
+});
+
 app.use(express.static('public'));
 app.use(express.json({ limit: '1mb' }));
 
