@@ -1,10 +1,13 @@
 # IconTale
 
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)](tsconfig.json)
 [![Express](https://img.shields.io/badge/Express-v4-000000?logo=express&logoColor=white)](https://expressjs.com/)
 [![Socket.io](https://img.shields.io/badge/Socket.io-v4-010101?logo=socket.io&logoColor=white)](https://socket.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/arvinka23/icontale_v1/actions/workflows/ci.yml/badge.svg)](https://github.com/arvinka23/icontale_v1/actions)
+[![Tests](https://img.shields.io/badge/tests-vitest%20%2B%20playwright-6E9F18?logo=vitest&logoColor=white)](#testing)
+[![Coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen)](#testing)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](#docker)
 
 > A real-time multiplayer storytelling game where players write creative stories inspired by emoji combinations, then try to guess each other's emojis and identities.
@@ -328,17 +331,79 @@ Full documentation of all real-time events between client and server.
 
 ## Testing
 
-```bash
-# Run all tests
-npm test
+IconTale ships with a three-tier test pyramid so regressions get
+caught at the cheapest possible layer:
 
-# Run in watch mode
-npm run test:watch
+| Layer | Runner | Scope | Command |
+|---|---|---|---|
+| **Unit** | Vitest | Pure helpers (`lib/sanitize`, `lib/scoring`, `lib/metrics`, …) | `npm test` |
+| **Integration** | Vitest + socket.io-client | Socket event surface wired against `lib/store` mock | `npm test` (same invocation) |
+| **End-to-end (smoke)** | Playwright + Chromium | Real browser against a live Node server | `npm run test:e2e` |
+
+### Run the full suite
+
+```bash
+npm test                    # unit + integration (Vitest)
+npm run test:watch          # same, watch mode
+npm run test:coverage       # same, with threshold enforcement
+npm run test:e2e            # Playwright smoke tests (installs Chromium lazily)
+npm run typecheck:client    # tsc --noEmit on public/js/**
 ```
 
-Tests cover:
-- **Input Sanitization** — HTML escaping, username/story/room code validation
-- **Scoring Logic** — Classic & blind mode scoring, team score calculation
+### Coverage gates
+
+`vitest.config.js` enforces a floor via `coverage.thresholds`:
+
+| Metric | Minimum |
+|---|---|
+| Lines | 70 % |
+| Statements | 70 % |
+| Branches | 70 % |
+| Functions | 85 % |
+
+Running `npm run test:coverage` locally produces an HTML report
+under `coverage/`. CI uploads the same folder as an artefact for
+14 days. Ratchet the thresholds up in small steps whenever a PR
+adds meaningful coverage — never lower them.
+
+### What the tests actually cover
+
+- **`__tests__/sanitize.test.js`** — HTML escaping, username / story /
+  room-code validation, settings allow-listing.
+- **`__tests__/scoring.test.js`** — Classic, blind and team scoring,
+  derangement-based story assignment.
+- **`__tests__/wordfilter.test.js`** — Profanity rejection with and
+  without Unicode folding.
+- **`__tests__/store.test.js`** — Redis store semantics with an
+  in-memory stub (key layout, TTLs, cleanup).
+- **`__tests__/achievements.test.js`** — 15-achievement unlock logic.
+- **`__tests__/metrics.test.js`** — Prometheus registry behaviour
+  (label aggregation, snapshot gauges, error isolation).
+- **`__tests__/sentry.test.js`** — DSN-gated init, safe fallbacks.
+- **`__tests__/socket-rate-limit.test.js`** — per-event quotas + global
+  backstop + payload-size guard.
+- **`__tests__/socket-auth.test.js`** — HMAC handshake tokens.
+- **`__tests__/locales.test.js`** — Key parity and placeholder parity
+  between `public/locales/*.json`.
+- **`__tests__/server-helpers.test.js`** — Pure utilities extracted
+  from `server.ts`.
+- **`__tests__/integration.test.js`** — Real Socket.io client against a
+  real test server (`__tests__/test-server.js`). Covers HTTP health +
+  metrics endpoints, lobby create/join flow, rate limits.
+- **`__tests__/e2e.test.js`** — Full game flow over Socket.io (no
+  browser): classic, speed, blind, team modes, reconnect, spectator.
+- **`e2e/lobby-flow.spec.js`** — Real browser smoke test (Playwright):
+  asserts the page loads, a lobby can be created, a 6-char code
+  renders and no console errors fire.
+
+### Writing new tests
+
+- Put unit tests next to existing ones under `__tests__/`.
+- Add Playwright scenarios under `e2e/` using `*.spec.js`.
+- See [`docs/CLIENT_TYPES.md`](docs/CLIENT_TYPES.md) for JSDoc
+  conventions if you add client-side code.
+- See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for a map of
+  which layer owns which behaviour.
 
 ---
 
