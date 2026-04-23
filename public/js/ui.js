@@ -670,13 +670,23 @@ export function showSpectatorView(info) {
 
 // ── Tutorial ────────────────────────────────────────────────
 
+let tutorialTrap = null;
+
 export function showTutorial() {
     dom.tutorialModal.classList.remove('hidden');
+    // Late import avoids a circular dependency at module init time.
+    import('./focus-trap.js').then(({ activateFocusTrap }) => {
+        tutorialTrap = activateFocusTrap(dom.tutorialModal, { onEscape: hideTutorial });
+    });
 }
 
 export function hideTutorial() {
     dom.tutorialModal.classList.add('hidden');
     localStorage.setItem('icontale_tutorial_seen', 'true');
+    if (tutorialTrap) {
+        tutorialTrap.release();
+        tutorialTrap = null;
+    }
 }
 
 // ── Team Scores (shared renderer) ───────────────────────────

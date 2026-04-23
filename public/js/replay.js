@@ -2,6 +2,8 @@
 //  Replay Viewer — Client-side replay viewing
 // ═══════════════════════════════════════════════════════════════
 
+import { activateFocusTrap } from './focus-trap.js';
+
 const modal = document.getElementById('replay-modal');
 const timeline = document.getElementById('replay-timeline');
 const content = document.getElementById('replay-content');
@@ -12,6 +14,16 @@ const closeBtn = document.getElementById('replay-close');
 
 let events = [];
 let currentIdx = 0;
+let trap = null;
+
+function closeModal() {
+    if (!modal) return;
+    modal.classList.add('hidden');
+    if (trap) {
+        trap.release();
+        trap = null;
+    }
+}
 
 /**
  * Open the replay viewer for a given replay ID.
@@ -42,6 +54,7 @@ export async function openReplay(replayId) {
 
         renderEvent();
         modal.classList.remove('hidden');
+        trap = activateFocusTrap(modal, { onEscape: closeModal });
     } catch (err) {
         console.error('[replay] Error loading replay:', err);
     }
@@ -87,21 +100,13 @@ function goTo(idx) {
     renderEvent();
 }
 
-// Navigation
 if (prevBtn) prevBtn.addEventListener('click', () => goTo(currentIdx - 1));
 if (nextBtn) nextBtn.addEventListener('click', () => goTo(currentIdx + 1));
-if (closeBtn) closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+if (closeBtn) closeBtn.addEventListener('click', closeModal);
 
-// Close on background click
+// Click on the backdrop (anything outside .modal-content) closes the modal.
 if (modal) {
     modal.addEventListener('click', (e) => {
-        if (e.target === modal) modal.classList.add('hidden');
+        if (e.target === modal) closeModal();
     });
 }
-
-// Close on Escape
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
-        modal.classList.add('hidden');
-    }
-});

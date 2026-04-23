@@ -27,6 +27,7 @@ const SHELL_ASSETS = [
     '/js/toast.js',
     '/js/theme.js',
     '/js/theme-preload.js',
+    '/js/focus-trap.js',
     '/manifest.json',
     '/favicon.ico',
     '/icon-192.png',
