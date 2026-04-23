@@ -28,6 +28,7 @@ const SHELL_ASSETS = [
     '/js/theme.js',
     '/js/theme-preload.js',
     '/js/focus-trap.js',
+    '/js/radio-nav.js',
     '/manifest.json',
     '/favicon.ico',
     '/icon-192.png',
