@@ -59,13 +59,28 @@ log.info({ NODE_ENV, PORT, origins: ALLOWED_ORIGINS }, 'Environment validated');
 const app = express();
 const server = http.createServer(app);
 
+// Trust the first proxy hop so req.ip, req.protocol and the
+// X-Forwarded-* headers reflect reality behind Render/Railway/
+// Heroku/Fly load balancers. Without this the HTTPS redirect
+// below and the express-rate-limit per-IP bucket both degrade:
+//   - Any client could spoof 'x-forwarded-proto: https' to
+//     bypass the redirect.
+//   - Every request would appear to come from the proxy's IP,
+//     so one abusive client could exhaust the rate-limit for
+//     everyone else.
+// '1' matches exactly one hop, which is correct for the usual
+// managed-PaaS deploys. Set TRUST_PROXY=loopback|uniquelocal|
+// ...or a number in the env to customise.
+const trustProxy = process.env.TRUST_PROXY ?? '1';
+app.set('trust proxy', /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy);
+
 // HTTPS redirect in production
 if (NODE_ENV === 'production') {
     app.use((req, res, next) => {
-        if (req.headers['x-forwarded-proto'] !== 'https') {
-            return res.redirect(301, `https://${req.hostname}${req.url}`);
+        if (req.secure || req.headers['x-forwarded-proto'] === 'https') {
+            return next();
         }
-        next();
+        return res.redirect(301, `https://${req.hostname}${req.url}`);
     });
 }
 
