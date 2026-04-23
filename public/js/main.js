@@ -100,7 +100,7 @@ export function restoreDraftIfAny() {
         const saved = sessionStorage.getItem(key);
         if (saved && !dom.writingStory.value) {
             dom.writingStory.value = saved;
-            dom.wordCount.textContent = countWords(saved);
+            dom.wordCount.textContent = String(countWords(saved));
         }
     } catch { /* ignore */ }
 }
@@ -123,8 +123,8 @@ function scheduleDraftSave() {
 // Word count (writing phase) + debounced draft autosave
 dom.writingStory.addEventListener('input', () => {
     const words = countWords(dom.writingStory.value);
-    dom.wordCount.textContent = words;
-    const limit = parseInt(dom.wordLimit.textContent) || 500;
+    dom.wordCount.textContent = String(words);
+    const limit = parseInt(dom.wordLimit.textContent ?? '500') || 500;
     dom.wordCount.classList.toggle('over-limit', words > limit);
     scheduleDraftSave();
 });
@@ -175,7 +175,8 @@ dom.gameoverNewGameBtn.onclick = () => {
 
 // Replay viewer (if replay button exists in game-over screen)
 document.addEventListener('click', (e) => {
-    if (e.target.closest('#replay-btn') && state.lastReplayId) {
+    const target = /** @type {HTMLElement | null} */ (e.target);
+    if (target && target.closest('#replay-btn') && state.lastReplayId) {
         openReplay(state.lastReplayId);
     }
 });

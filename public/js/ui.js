@@ -9,6 +9,33 @@ import { playClick, playSuccess, playTick } from './sounds.js';
 import { enhanceRadioGroup } from './radio-nav.js';
 import { t } from './i18n.js';
 
+// ── Local helpers ───────────────────────────────────────────
+/**
+ * Typed querySelectorAll wrapper. Asserts the matched element is of
+ * the caller-chosen subtype. Keeps .value / .checked / .dataset
+ * accesses clean under checkJs without littering call sites with
+ * JSDoc casts.
+ *
+ * @template {Element} T
+ * @param {ParentNode} root
+ * @param {string} selector
+ * @returns {NodeListOf<T>}
+ */
+function qsa(root, selector) {
+    return /** @type {NodeListOf<T>} */ (root.querySelectorAll(selector));
+}
+
+/**
+ * Typed querySelector companion.
+ * @template {Element} T
+ * @param {ParentNode} root
+ * @param {string} selector
+ * @returns {T | null}
+ */
+function qs(root, selector) {
+    return /** @type {T | null} */ (root.querySelector(selector));
+}
+
 // ── Emoji Selection ─────────────────────────────────────────
 
 function getRandomEmoji() {
@@ -83,16 +110,24 @@ export function initSettingsUI(emitFn) {
     // Emoji packs
     const pc = dom.packOptions;
     if (pc) {
-        pc.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-            cb.addEventListener('change', () => {
-                const allCb = pc.querySelector('input[value="all"]');
-                if (cb.value === 'all' && cb.checked) {
-                    pc.querySelectorAll('input:not([value="all"])').forEach(c => c.checked = false);
-                } else if (cb.value !== 'all' && cb.checked) {
+        qsa(pc, 'input[type="checkbox"]').forEach((cb) => {
+            /** @type {HTMLInputElement} */
+            const cbEl = /** @type {HTMLInputElement} */ (cb);
+            cbEl.addEventListener('change', () => {
+                const allCb = /** @type {HTMLInputElement | null} */ (
+                    qs(pc, 'input[value="all"]')
+                );
+                if (cbEl.value === 'all' && cbEl.checked) {
+                    qsa(pc, 'input:not([value="all"])').forEach((c) => {
+                        /** @type {HTMLInputElement} */ (c).checked = false;
+                    });
+                } else if (cbEl.value !== 'all' && cbEl.checked && allCb) {
                     allCb.checked = false;
                 }
-                const checked = [...pc.querySelectorAll('input:checked')].map(c => c.value);
-                if (checked.length === 0) allCb.checked = true;
+                const checked = [...qsa(pc, 'input:checked')].map(
+                    (c) => /** @type {HTMLInputElement} */ (c).value
+                );
+                if (checked.length === 0 && allCb) allCb.checked = true;
                 emitFn();
             });
         });
@@ -102,17 +137,18 @@ export function initSettingsUI(emitFn) {
 function setupSettingGroup(containerId, onChangeCallback) {
     const container = document.getElementById(containerId);
     if (!container) return;
-    container.querySelectorAll('.setting-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+    qsa(container, '.setting-btn').forEach((btn) => {
+        const btnEl = /** @type {HTMLButtonElement} */ (btn);
+        btnEl.addEventListener('click', () => {
             if (container.closest('.setting-locked')) return;
-            container.querySelectorAll('.setting-btn').forEach(b => {
+            qsa(container, '.setting-btn').forEach((b) => {
                 b.classList.remove('active');
                 b.setAttribute('aria-checked', 'false');
             });
-            btn.classList.add('active');
-            btn.setAttribute('aria-checked', 'true');
+            btnEl.classList.add('active');
+            btnEl.setAttribute('aria-checked', 'true');
             playClick();
-            if (onChangeCallback) onChangeCallback(btn.dataset.value);
+            if (onChangeCallback) onChangeCallback(btnEl.dataset.value);
         });
     });
 }
@@ -120,23 +156,28 @@ function setupSettingGroup(containerId, onChangeCallback) {
 export function setSettingActive(containerId, value) {
     const container = document.getElementById(containerId);
     if (!container) return;
-    container.querySelectorAll('.setting-btn').forEach(b => {
-        const match = b.dataset.value === String(value);
-        b.classList.toggle('active', match);
-        b.setAttribute('aria-checked', String(match));
+    qsa(container, '.setting-btn').forEach((b) => {
+        const bEl = /** @type {HTMLButtonElement} */ (b);
+        const match = bEl.dataset.value === String(value);
+        bEl.classList.toggle('active', match);
+        bEl.setAttribute('aria-checked', String(match));
     });
 }
 
 export function getActiveValue(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return null;
-    const active = container.querySelector('.setting-btn.active');
-    return active ? active.dataset.value : null;
+    const active = /** @type {HTMLButtonElement | null} */ (
+        container.querySelector('.setting-btn.active')
+    );
+    return active ? active.dataset.value ?? null : null;
 }
 
 export function getSelectedPacks() {
     if (!dom.packOptions) return ['all'];
-    const checked = [...dom.packOptions.querySelectorAll('input:checked')].map(c => c.value);
+    const checked = [...qsa(dom.packOptions, 'input:checked')].map(
+        (c) => /** @type {HTMLInputElement} */ (c).value
+    );
     return checked.length > 0 ? checked : ['all'];
 }
 
@@ -253,13 +294,13 @@ export function showWritingPhase(emojis, writingStartTime, settings, round, tota
     // Round indicator
     if (totalRounds > 1) {
         dom.roundIndicator.classList.remove('hidden');
-        dom.roundCurrent.textContent = round;
-        dom.roundTotal.textContent = totalRounds;
+        dom.roundCurrent.textContent = String(round);
+        dom.roundTotal.textContent = String(totalRounds);
     } else {
         dom.roundIndicator.classList.add('hidden');
     }
 
-    dom.wordLimit.textContent = settings.wordLimit;
+    dom.wordLimit.textContent = String(settings.wordLimit);
     dom.writingSection.classList.toggle('speed-mode', settings.gameMode === 'speed');
 
     // Render emojis
@@ -331,7 +372,7 @@ function updateWritingTimer(total) {
 
     const bar = dom.writingTimerBar?.parentElement;
     if (bar && bar.getAttribute('role') === 'progressbar') {
-        bar.setAttribute('aria-valuenow', Math.round(pct * 100));
+        bar.setAttribute('aria-valuenow', String(Math.round(pct * 100)));
     }
 }
 
@@ -470,13 +511,15 @@ function updateGuessButton() {
 }
 
 function setGuessInputsDisabled(disabled) {
-    dom.emojiOptions.querySelectorAll('.guess-emoji-btn').forEach(b => {
-        b.disabled = disabled;
-        b.classList.toggle('inactive', disabled);
+    qsa(dom.emojiOptions, '.guess-emoji-btn').forEach((b) => {
+        const btn = /** @type {HTMLButtonElement} */ (b);
+        btn.disabled = disabled;
+        btn.classList.toggle('inactive', disabled);
     });
-    dom.playerOptions.querySelectorAll('.guess-player-btn').forEach(b => {
-        b.disabled = disabled;
-        b.classList.toggle('inactive', disabled);
+    qsa(dom.playerOptions, '.guess-player-btn').forEach((b) => {
+        const btn = /** @type {HTMLButtonElement} */ (b);
+        btn.disabled = disabled;
+        btn.classList.toggle('inactive', disabled);
     });
 }
 
@@ -640,18 +683,22 @@ function renderLeaderboardTable(table, leaderboard, details, players) {
         `;
 
         if (details && details[p.id]) {
-            const tdPoints = tr.querySelector('.leaderboard-points');
-            const tooltip = document.createElement('span');
-            tooltip.className = 'leaderboard-tooltip';
-            const tips = [
-                ...(details[p.id].personal || []).map(t => t.reason),
-                ...(details[p.id].earned || []).map(t => t.reason),
-            ];
-            tooltip.innerHTML = tips.length ? tips.map(t => `<div>${t}</div>`).join('') : 'Keine Punkte';
-            tdPoints.appendChild(tooltip);
-            tdPoints.style.cursor = 'pointer';
-            tdPoints.onmouseenter = () => { tooltip.style.display = 'block'; };
-            tdPoints.onmouseleave = () => { tooltip.style.display = 'none'; };
+            const tdPoints = /** @type {HTMLTableCellElement | null} */ (
+                tr.querySelector('.leaderboard-points')
+            );
+            if (tdPoints) {
+                const tooltip = document.createElement('span');
+                tooltip.className = 'leaderboard-tooltip';
+                const tips = [
+                    ...(details[p.id].personal || []).map(t => t.reason),
+                    ...(details[p.id].earned || []).map(t => t.reason),
+                ];
+                tooltip.innerHTML = tips.length ? tips.map(t => `<div>${t}</div>`).join('') : 'Keine Punkte';
+                tdPoints.appendChild(tooltip);
+                tdPoints.style.cursor = 'pointer';
+                tdPoints.onmouseenter = () => { tooltip.style.display = 'block'; };
+                tdPoints.onmouseleave = () => { tooltip.style.display = 'none'; };
+            }
         }
 
         tbody.appendChild(tr);

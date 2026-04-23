@@ -5,9 +5,105 @@
 import { state } from './state.js';
 import { toastError } from './toast.js';
 
-const $ = (id) => document.getElementById(id);
+/**
+ * Typed getElementById wrapper. The caller picks the expected element
+ * subtype so downstream code can use .value / .checked / .dataset
+ * without extra casts under checkJs.
+ *
+ * @template {HTMLElement} T
+ * @param {string} id
+ * @returns {T}
+ */
+const $ = (id) => /** @type {T} */ (document.getElementById(id));
 
-/** All DOM element references (cached once on load). */
+/**
+ * All DOM element references, cached once on module load. Types are
+ * annotated so public/js/tsconfig.client.json can verify .value,
+ * .checked and .disabled usages at check-time.
+ *
+ * @type {{
+ *   mainMenu: HTMLElement,
+ *   tabCreate: HTMLButtonElement,
+ *   tabJoin: HTMLButtonElement,
+ *   username: HTMLInputElement,
+ *   roomCodeInput: HTMLInputElement,
+ *   roomCodeGroup: HTMLElement,
+ *   menuActionBtn: HTMLButtonElement,
+ *   spectatorBtn: HTMLButtonElement,
+ *   userEmoji: HTMLElement,
+ *   changeEmoji: HTMLButtonElement,
+ *   helpBtn: HTMLButtonElement,
+ *   lobby: HTMLElement,
+ *   roomCode: HTMLElement,
+ *   copyCodeBtn: HTMLButtonElement,
+ *   copyLinkBtn: HTMLButtonElement,
+ *   playersGrid: HTMLElement,
+ *   startGame: HTMLButtonElement,
+ *   startHint: HTMLElement,
+ *   settingsPanel: HTMLElement,
+ *   settingsDisplay: HTMLElement,
+ *   spectatorCount: HTMLElement,
+ *   spectatorNum: HTMLElement,
+ *   teamDisplay: HTMLElement,
+ *   modeOptions: HTMLElement,
+ *   modeDesc: HTMLElement,
+ *   timerGroup: HTMLElement,
+ *   timerOptions: HTMLElement,
+ *   wordlimitGroup: HTMLElement,
+ *   wordlimitOpts: HTMLElement,
+ *   emojicountOpts: HTMLElement,
+ *   roundsOpts: HTMLElement,
+ *   packOptions: HTMLElement,
+ *   writingSection: HTMLElement,
+ *   writingTimerTime: HTMLElement,
+ *   writingTimerBar: HTMLElement,
+ *   writingTimerAnnounce: HTMLElement,
+ *   writingEmojis: HTMLElement,
+ *   writingStory: HTMLTextAreaElement,
+ *   writingFinishBtn: HTMLButtonElement,
+ *   wordCount: HTMLElement,
+ *   wordLimit: HTMLElement,
+ *   roundIndicator: HTMLElement,
+ *   roundCurrent: HTMLElement,
+ *   roundTotal: HTMLElement,
+ *   writingProgress: HTMLElement,
+ *   storiesSubmitted: HTMLElement,
+ *   storiesTotal: HTMLElement,
+ *   guessSection: HTMLElement,
+ *   guessStory: HTMLElement,
+ *   emojiGuessGroup: HTMLElement,
+ *   emojiOptions: HTMLElement,
+ *   playerOptions: HTMLElement,
+ *   submitGuess: HTMLButtonElement,
+ *   guessRoundIndicator: HTMLElement,
+ *   guessRoundCurrent: HTMLElement,
+ *   guessRoundTotal: HTMLElement,
+ *   resultsSection: HTMLElement,
+ *   resultsSidebar: HTMLElement,
+ *   resultsChat: HTMLElement,
+ *   resultsContinueBtn: HTMLButtonElement,
+ *   resultsRoundInd: HTMLElement,
+ *   resultsRoundCur: HTMLElement,
+ *   resultsRoundTot: HTMLElement,
+ *   teamScores: HTMLElement,
+ *   leaderboardContainer: HTMLElement,
+ *   leaderboardTable: HTMLTableElement,
+ *   postRoundActions: HTMLElement,
+ *   nextRoundBtn: HTMLButtonElement,
+ *   newGameBtn: HTMLButtonElement,
+ *   gameoverSection: HTMLElement,
+ *   gameoverTable: HTMLTableElement,
+ *   gameoverTeamScores: HTMLElement,
+ *   gameoverNewGameBtn: HTMLButtonElement,
+ *   spectatorSection: HTMLElement,
+ *   spectatorInfo: HTMLElement,
+ *   spectatorContent: HTMLElement,
+ *   tutorialModal: HTMLElement,
+ *   tutorialClose: HTMLButtonElement,
+ *   tutorialStart: HTMLButtonElement,
+ *   loadingOverlay: HTMLElement,
+ * }}
+ */
 export const dom = {
     // Menu
     mainMenu:       $('main-menu'),
@@ -132,12 +228,20 @@ export function showError(message) {
     toastError(message);
 }
 
-/** Count words in a string. */
+/**
+ * Count the words in a string.
+ * @param {string} text
+ * @returns {number}
+ */
 export function countWords(text) {
     return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-/** Format seconds as MM:SS. */
+/**
+ * Format seconds as MM:SS.
+ * @param {number} seconds
+ * @returns {string}
+ */
 export function formatTime(seconds) {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
@@ -145,8 +249,13 @@ export function formatTime(seconds) {
 }
 
 /**
- * Typewriter text effect.
- * Returns the interval ID so callers can clean it up.
+ * Typewriter text effect. Writes `text` character-by-character into
+ * `el.textContent`. Returns the interval ID so callers can clean it up.
+ *
+ * @param {string} text
+ * @param {HTMLElement} el
+ * @param {number} [speed] milliseconds per character
+ * @returns {ReturnType<typeof setInterval>}
  */
 export function typeText(text, el, speed = 18) {
     el.textContent = '';

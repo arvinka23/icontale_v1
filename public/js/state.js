@@ -26,7 +26,10 @@ const TRANSITIONS = {
     [Phase.SPECTATING]:  [Phase.MENU],
 };
 
-// Central game state (single source of truth)
+/**
+ * Central game state (single source of truth).
+ * @type {import('./types').IconTaleState}
+ */
 export const state = {
     phase:           Phase.MENU,
     roomCode:        null,
@@ -37,24 +40,20 @@ export const state = {
     guessSubmitted:  false,
     soundEnabled:    true,
 
-    // Guess selections
     selectedEmojiCombo: null,
     selectedPlayerId:   null,
 
-    // Results
     resultsData:     null,
     resultsPlayers:  [],
     currentChatIdx:  0,
     currentMsgStep:  0,
 
-    // Replay
     lastReplayId:    null,
 
-    // Timers (stored so they can be cleaned up)
     writingTimer:    null,
     writingTimeLeft: 180,
-    writingMilestonesAnnounced: null, // Set<number>; lazily initialised
-    typeTextTimers:  [],  // Track typeText intervals for cleanup
+    writingMilestonesAnnounced: null,
+    typeTextTimers:  [],
     errorTimeout:    null,
 };
 
@@ -77,24 +76,25 @@ export function onPhaseChange(fn) {
 /**
  * Transition to a new game phase.
  * Validates the transition and cleans up the old phase.
- * @param {string} newPhase
- * @returns {boolean} whether the transition was successful
+ *
+ * @param {string} newPhase one of the Phase values (string so callers
+ *   can pass interpolated values without casts)
+ * @returns {boolean} whether the transition was accepted
  */
 export function setPhase(newPhase) {
     const oldPhase = state.phase;
-    const allowed = TRANSITIONS[oldPhase];
+    /** @type {readonly string[] | undefined} */
+    const allowed = TRANSITIONS[/** @type {keyof typeof TRANSITIONS} */ (oldPhase)];
 
     if (!allowed || !allowed.includes(newPhase)) {
         console.warn(`Invalid phase transition: ${oldPhase} → ${newPhase}`);
         return false;
     }
 
-    // Clean up old phase
     cleanupPhase(oldPhase);
 
-    state.phase = newPhase;
+    state.phase = /** @type {typeof state.phase} */ (newPhase);
 
-    // Notify listeners
     for (const fn of listeners) {
         try { fn(newPhase, oldPhase); } catch (e) { console.error('Phase listener error:', e); }
     }
@@ -108,7 +108,7 @@ export function setPhase(newPhase) {
  */
 export function forcePhase(newPhase) {
     cleanupPhase(state.phase);
-    state.phase = newPhase;
+    state.phase = /** @type {typeof state.phase} */ (newPhase);
 }
 
 /**
