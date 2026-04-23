@@ -71,7 +71,11 @@
     }
     </script>
 
-    <!-- Fonts (self-hosted, preload critical weights in a separate commit) -->
+    <!-- Fonts (self-hosted Inter, WOFF2 latin subset).
+         Preload only the two weights used above the fold: 400 (body)
+         and 700 (h1/h2). The rest is lazily picked up from styles.css. -->
+    <link rel="preload" href="/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/inter-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
     
 
     <!-- Styles -->
