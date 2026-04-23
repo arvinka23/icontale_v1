@@ -5,6 +5,12 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 require('dotenv').config();
 
+// Sentry must initialise before any instrumentation hooks can be
+// registered (HTTP request capture, express middleware). Keep this
+// at the very top of the file.
+import * as sentry from './lib/sentry';
+sentry.initSentry({ version: process.env.npm_package_version });
+
 import crypto from 'crypto';
 import express from 'express';
 import http from 'http';
@@ -256,6 +262,11 @@ app.get('/replay/:id', async (req, res) => {
     if (!replay) return res.status(404).json({ error: 'Replay not found' });
     res.json(replay);
 });
+
+// Sentry express error handler must come after every route and
+// before the catch-all 500 handler (if any). No-op when Sentry is
+// disabled via absent SENTRY_DSN.
+sentry.attachExpressErrorHandler(app);
 
 // ── Socket.io setup ─────────────────────────────────────────
 
@@ -1265,11 +1276,13 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 process.on('uncaughtException', (err: Error) => {
     log.fatal({ err }, 'Uncaught exception');
+    sentry.captureException(err);
     gracefulShutdown('uncaughtException');
 });
 
 process.on('unhandledRejection', (reason: unknown) => {
     log.error({ reason }, 'Unhandled rejection');
+    sentry.captureException(reason);
 });
 
 // ── Start server ────────────────────────────────────────────
