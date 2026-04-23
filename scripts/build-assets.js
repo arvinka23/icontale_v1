@@ -20,6 +20,8 @@ const CleanCSS = require('clean-css');
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const SRC_CSS = path.join(PUBLIC_DIR, 'styles.css');
 const HTML_FILE = path.join(PUBLIC_DIR, 'index.html');
+const SW_FILE = path.join(PUBLIC_DIR, 'sw.js');
+const PKG = require(path.join(__dirname, '..', 'package.json'));
 
 function log(...args) {
     console.log('[build-assets]', ...args);
@@ -57,6 +59,17 @@ function rewriteHtml(hashedName) {
     fs.writeFileSync(HTML_FILE, patched);
 }
 
+function stampServiceWorker() {
+    if (!fs.existsSync(SW_FILE)) return;
+    const src = fs.readFileSync(SW_FILE, 'utf8');
+    const stamp = `${PKG.version}-${Date.now().toString(36)}`;
+    const patched = src.replace(/__ICONTALE_VERSION__/g, stamp);
+    if (patched !== src) {
+        fs.writeFileSync(SW_FILE, patched);
+        log(`sw.js: cache name pinned to icontale-${stamp}`);
+    }
+}
+
 function main() {
     if (!fs.existsSync(SRC_CSS)) {
         throw new Error(`${SRC_CSS} not found`);
@@ -73,6 +86,7 @@ function main() {
     fs.writeFileSync(hashedPath, minified);
     fs.writeFileSync(stablePath, minified);
     rewriteHtml(hashedName);
+    stampServiceWorker();
 
     const inputKb = (src.length / 1024).toFixed(1);
     const outputKb = (minified.length / 1024).toFixed(1);
