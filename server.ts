@@ -18,6 +18,7 @@ import * as san from './lib/sanitize';
 import * as filter from './lib/wordfilter';
 import { calculateTeamScores } from './lib/scoring';
 import * as store from './lib/store';
+import * as rateLimiter from './lib/socket-rate-limit';
 import { updateStatsAndCheck, ACHIEVEMENTS } from './lib/achievements';
 import { recordEvent, finalizeReplay, getReplay } from './lib/replay';
 import { getRandomEmojis } from './lib/emoji-packs';
@@ -34,7 +35,6 @@ import type {
     Lobby,
     Player,
     GameSettings,
-    RateLimitEntry,
     DisconnectedSession,
     Guess,
 } from './lib/types';
@@ -189,29 +189,14 @@ io.use((socket, next) => {
     return next(new Error('Origin not allowed'));
 });
 
-// ── Socket rate limiting (per socket) ───────────────────────
+// ── Socket rate limiting ────────────────────────────────────
+// Per-event quotas (plus a global backstop) live in
+// ./lib/socket-rate-limit.ts. Buckets are swept periodically to
+// bound memory growth even when sockets churn.
 
-const socketRateLimits = new Map<string, RateLimitEntry>();
-const SOCKET_RATE_WINDOW = 10_000; // 10 seconds
-const SOCKET_RATE_MAX = 60; // max events per window
-
-function checkSocketRate(socketId: string): boolean {
-    const now = Date.now();
-    let entry = socketRateLimits.get(socketId);
-    if (!entry || now - entry.start > SOCKET_RATE_WINDOW) {
-        entry = { start: now, count: 0 };
-        socketRateLimits.set(socketId, entry);
-    }
-    entry.count++;
-    return entry.count <= SOCKET_RATE_MAX;
-}
-
-// Clean up stale rate-limit entries every minute
 setInterval(() => {
-    const now = Date.now();
-    for (const [id, entry] of socketRateLimits) {
-        if (now - entry.start > SOCKET_RATE_WINDOW * 2) socketRateLimits.delete(id);
-    }
+    const removed = rateLimiter.sweep();
+    if (removed > 0) log.debug({ removed }, 'Rate-limit bucket sweep');
 }, 60_000);
 
 // ── Default Settings ────────────────────────────────────────
@@ -320,8 +305,8 @@ io.on('connection', (socket: Socket) => {
     log.info({ socketId: socket.id }, 'Client connected');
 
     socket.use(([event], next) => {
-        if (!checkSocketRate(socket.id)) {
-            log.warn({ socketId: socket.id, event }, 'Socket rate limited');
+        if (typeof event !== 'string') return next();
+        if (!rateLimiter.allowEvent(socket.id, event)) {
             return next(new Error('Rate limited'));
         }
         next();
@@ -980,7 +965,7 @@ io.on('connection', (socket: Socket) => {
 
     socket.on('disconnect', (reason: string) => {
         log.info({ socketId: socket.id, reason }, 'Client disconnected');
-        socketRateLimits.delete(socket.id);
+        rateLimiter.forgetSocket(socket.id);
 
         for (const code in lobbies) {
             const lobby = lobbies[code]!;
