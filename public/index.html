@@ -130,10 +130,11 @@
     <div class="container">
         <header class="game-header">
             <h1>IconTale</h1>
-            <p class="game-subtitle">Kreative Geschichten mit Emojis!</p>
+            <p class="game-subtitle" data-i18n="app.subtitle">Kreative Geschichten mit Emojis!</p>
             <div class="header-tools">
-                <button id="theme-toggle" class="icon-btn" type="button" aria-label="Theme wechseln" title="Theme wechseln">🌙</button>
-                <button id="help-btn" class="icon-btn help-btn" type="button" title="Anleitung anzeigen" aria-label="Anleitung öffnen">?</button>
+                <button id="language-toggle" class="icon-btn" type="button" data-i18n-attr="aria-label:language.switch, title:language.switch">🌐</button>
+                <button id="theme-toggle" class="icon-btn" type="button" data-i18n-attr="aria-label:theme.toggle, title:theme.toggle">🌙</button>
+                <button id="help-btn" class="icon-btn help-btn" type="button" data-i18n-attr="title:tutorial.title, aria-label:tutorial.title">?</button>
             </div>
         </header>
 
@@ -141,12 +142,12 @@
 
             <!-- ── Hauptmenü ─────────────────────────────── -->
             <section id="main-menu" class="menu-section" aria-label="Hauptmenü">
-                <div class="tabs" role="tablist" aria-label="Lobby-Optionen">
+                <div class="tabs" role="tablist" aria-label="Lobby">
                     <button id="tab-create" class="tab active" role="tab" aria-selected="true" aria-controls="main-menu">
-                        <span class="tab-icon">✨</span> Lobby erstellen
+                        <span class="tab-icon">✨</span> <span data-i18n="menu.tab.create">Lobby erstellen</span>
                     </button>
                     <button id="tab-join" class="tab" role="tab" aria-selected="false" aria-controls="main-menu">
-                        <span class="tab-icon">🎯</span> Lobby beitreten
+                        <span class="tab-icon">🎯</span> <span data-i18n="menu.tab.join">Lobby beitreten</span>
                     </button>
                 </div>
 
@@ -159,19 +160,18 @@
 
                 <div class="menu-fields">
                     <div class="input-group">
-                        <label for="username" class="input-label">Dein Name</label>
-                        <input type="text" id="username" placeholder="Spitzname eingeben" maxlength="20" autocomplete="off" aria-required="true">
+                        <label for="username" class="input-label" data-i18n="menu.name.label">Dein Name</label>
+                        <input type="text" id="username" data-i18n-placeholder="menu.name.placeholder" placeholder="Spitzname eingeben" maxlength="20" autocomplete="off" aria-required="true">
                     </div>
                     <div class="input-group hidden" id="room-code-group">
-                        <label for="room-code-input" class="input-label">Lobby-Code</label>
-                        <input type="text" id="room-code-input" placeholder="6-stelliger Code" maxlength="6" pattern="[A-Za-z0-9]{6}" autocomplete="off" aria-describedby="room-code-hint">
-                        <span id="room-code-hint" class="sr-only">Gib den 6-stelligen alphanumerischen Lobby-Code ein</span>
+                        <label for="room-code-input" class="input-label" data-i18n="menu.roomCode.label">Lobby-Code</label>
+                        <input type="text" id="room-code-input" data-i18n-placeholder="menu.roomCode.placeholder" placeholder="6-stelliger Code" maxlength="6" pattern="[A-Za-z0-9]{6}" autocomplete="off">
                     </div>
                     <button id="menu-action-btn" class="primary-btn">
-                        <span class="btn-icon">🚀</span> Lobby erstellen
+                        <span class="btn-icon">🚀</span> <span data-i18n="menu.action.create">Lobby erstellen</span>
                     </button>
                     <button id="spectator-btn" class="secondary-btn hidden">
-                        <span class="btn-icon">👁️</span> Als Zuschauer beitreten
+                        <span class="btn-icon">👁️</span> <span data-i18n="menu.action.spectate">Als Zuschauer beitreten</span>
                     </button>
                 </div>
             </section>
@@ -179,38 +179,38 @@
             <!-- ── Lobby ─────────────────────────────────── -->
             <section id="lobby" class="lobby-section hidden" aria-label="Lobby">
                 <div class="lobby-header">
-                    <h2 class="lobby-title">Lobby <span id="room-code" class="room-code"></span></h2>
+                    <h2 class="lobby-title"><span data-i18n="lobby.title">Lobby</span> <span id="room-code" class="room-code"></span></h2>
                     <div class="lobby-share">
-                        <button id="copy-code-btn" class="secondary-btn lobby-share-btn" type="button" aria-label="Lobby-Code in die Zwischenablage kopieren">
-                            <span class="btn-icon">📋</span> Code kopieren
+                        <button id="copy-code-btn" class="secondary-btn lobby-share-btn" type="button" data-i18n-attr="aria-label:lobby.copyCode">
+                            <span class="btn-icon">📋</span> <span data-i18n="lobby.copyCode">Code kopieren</span>
                         </button>
-                        <button id="copy-link-btn" class="secondary-btn lobby-share-btn" type="button" aria-label="Einladungslink in die Zwischenablage kopieren">
-                            <span class="btn-icon">🔗</span> Link kopieren
+                        <button id="copy-link-btn" class="secondary-btn lobby-share-btn" type="button" data-i18n-attr="aria-label:lobby.copyLink">
+                            <span class="btn-icon">🔗</span> <span data-i18n="lobby.copyLink">Link kopieren</span>
                         </button>
                     </div>
-                    <p class="lobby-subtitle">Warte auf Spieler...</p>
+                    <p class="lobby-subtitle" data-i18n="lobby.waiting">Warte auf Spieler...</p>
                     <div id="spectator-count" class="spectator-count hidden" aria-live="polite">
-                        <span class="btn-icon">👁️</span> <span id="spectator-num">0</span> Zuschauer
+                        <span class="btn-icon">👁️</span> <span id="spectator-num">0</span> <span id="spectator-label">Zuschauer</span>
                     </div>
                 </div>
 
                 <!-- Einstellungen (nur Host) -->
                 <div id="settings-panel" class="settings-panel hidden" aria-label="Spieleinstellungen">
-                    <h3 class="settings-title">Einstellungen</h3>
+                    <h3 class="settings-title" data-i18n="settings.title">Einstellungen</h3>
 
                     <div class="setting-group">
-                        <label class="setting-label" id="mode-label">Spielmodus</label>
+                        <label class="setting-label" id="mode-label" data-i18n="settings.mode">Spielmodus</label>
                         <div class="setting-options" id="mode-options" role="radiogroup" aria-labelledby="mode-label">
-                            <button class="setting-btn active" data-value="classic" role="radio" aria-checked="true">🎭 Klassisch</button>
-                            <button class="setting-btn" data-value="speed" role="radio" aria-checked="false">⚡ Speed</button>
-                            <button class="setting-btn" data-value="blind" role="radio" aria-checked="false">🙈 Blind</button>
-                            <button class="setting-btn" data-value="team" role="radio" aria-checked="false">👥 Team</button>
+                            <button class="setting-btn active" data-value="classic" role="radio" aria-checked="true">🎭 <span data-i18n="mode.classic">Klassisch</span></button>
+                            <button class="setting-btn" data-value="speed" role="radio" aria-checked="false">⚡ <span data-i18n="mode.speed">Speed</span></button>
+                            <button class="setting-btn" data-value="blind" role="radio" aria-checked="false">🙈 <span data-i18n="mode.blind">Blind</span></button>
+                            <button class="setting-btn" data-value="team" role="radio" aria-checked="false">👥 <span data-i18n="mode.team">Team</span></button>
                         </div>
-                        <p class="setting-desc" id="mode-desc" aria-live="polite">Schreibe Geschichten und errate Emojis + Autor.</p>
+                        <p class="setting-desc" id="mode-desc" aria-live="polite" data-i18n="mode.classic.desc">Schreibe Geschichten und errate Emojis + Autor.</p>
                     </div>
 
                     <div class="setting-group" id="timer-group">
-                        <label class="setting-label" id="timer-label">Timer</label>
+                        <label class="setting-label" id="timer-label" data-i18n="settings.timer">Timer</label>
                         <div class="setting-options" id="timer-options" role="radiogroup" aria-labelledby="timer-label">
                             <button class="setting-btn" data-value="60" role="radio" aria-checked="false">1 Min</button>
                             <button class="setting-btn" data-value="120" role="radio" aria-checked="false">2 Min</button>
@@ -220,7 +220,7 @@
                     </div>
 
                     <div class="setting-group" id="wordlimit-group">
-                        <label class="setting-label" id="wordlimit-label">Wortlimit</label>
+                        <label class="setting-label" id="wordlimit-label" data-i18n="settings.wordLimit">Wortlimit</label>
                         <div class="setting-options" id="wordlimit-options" role="radiogroup" aria-labelledby="wordlimit-label">
                             <button class="setting-btn" data-value="100" role="radio" aria-checked="false">100</button>
                             <button class="setting-btn" data-value="250" role="radio" aria-checked="false">250</button>
@@ -229,7 +229,7 @@
                     </div>
 
                     <div class="setting-group">
-                        <label class="setting-label" id="emojicount-label">Emoji-Anzahl</label>
+                        <label class="setting-label" id="emojicount-label" data-i18n="settings.emojiCount">Emoji-Anzahl</label>
                         <div class="setting-options" id="emojicount-options" role="radiogroup" aria-labelledby="emojicount-label">
                             <button class="setting-btn" data-value="1" role="radio" aria-checked="false">1</button>
                             <button class="setting-btn" data-value="2" role="radio" aria-checked="false">2</button>
@@ -240,7 +240,7 @@
                     </div>
 
                     <div class="setting-group">
-                        <label class="setting-label" id="rounds-label">Runden</label>
+                        <label class="setting-label" id="rounds-label" data-i18n="settings.rounds">Runden</label>
                         <div class="setting-options" id="rounds-options" role="radiogroup" aria-labelledby="rounds-label">
                             <button class="setting-btn active" data-value="1" role="radio" aria-checked="true">1</button>
                             <button class="setting-btn" data-value="3" role="radio" aria-checked="false">Best of 3</button>
@@ -249,7 +249,7 @@
                     </div>
 
                     <div class="setting-group">
-                        <label class="setting-label">Emoji-Pakete</label>
+                        <label class="setting-label" data-i18n="settings.emojiPacks">Emoji-Pakete</label>
                         <div class="emoji-pack-options" id="pack-options">
                             <label class="pack-checkbox"><input type="checkbox" value="all" checked> 🌐 Alle</label>
                             <label class="pack-checkbox"><input type="checkbox" value="faces"> 😀 Gesichter</label>
@@ -271,8 +271,8 @@
                 <div class="lobby-players-grid" id="players-grid" role="list" aria-label="Spieler in der Lobby"></div>
 
                 <div class="lobby-actions">
-                    <button id="start-game" class="start-btn" disabled aria-label="Spiel starten">
-                        <span class="btn-icon">🎬</span> Spiel starten
+                    <button id="start-game" class="start-btn" disabled data-i18n-attr="aria-label:lobby.start">
+                        <span class="btn-icon">🎬</span> <span data-i18n="lobby.start">Spiel starten</span>
                     </button>
                     <p class="start-hint" id="start-hint">Mindestens 3 Spieler nötig</p>
                 </div>
@@ -288,7 +288,7 @@
                     <div class="writing-timer" aria-label="Verbleibende Zeit">
                         <div class="timer-display">
                             <div class="timer-time" id="writing-timer-time" aria-live="off">03:00</div>
-                            <div class="timer-label">Verbleibend</div>
+                            <div class="timer-label" data-i18n="writing.timer.remaining">Verbleibend</div>
                         </div>
                         <div class="timer-bar-outer" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" aria-label="Verbleibende Schreibzeit">
                             <div class="timer-bar-inner" id="writing-timer-bar"></div>
@@ -299,20 +299,20 @@
 
                     <div class="writing-main">
                         <div class="writing-header">
-                            <h3>Deine Emoji-Inspiration</h3>
-                            <div class="writing-emojis" id="writing-emojis" role="group" aria-label="Emojis für deine Geschichte"></div>
+                            <h3 data-i18n="writing.heading">Deine Emoji-Inspiration</h3>
+                            <div class="writing-emojis" id="writing-emojis" role="group" aria-label="Emojis"></div>
                         </div>
 
                         <div class="writing-area">
-                            <textarea id="writing-story" rows="8" placeholder="Lass deiner Kreativität freien Lauf! Schreibe eine Geschichte inspiriert von diesen Emojis..." maxlength="4000" aria-label="Deine Geschichte"></textarea>
+                            <textarea id="writing-story" rows="8" data-i18n-placeholder="writing.placeholder" placeholder="Lass deiner Kreativität freien Lauf! Schreibe eine Geschichte inspiriert von diesen Emojis..." maxlength="4000"></textarea>
                             <div class="story-stats">
-                                <span class="word-count">Wörter: <span id="word-count">0</span> / <span id="word-limit">500</span></span>
+                                <span class="word-count"><span data-i18n="writing.timer.remaining">Wörter</span>: <span id="word-count">0</span> / <span id="word-limit">500</span></span>
                             </div>
                         </div>
 
                         <div class="writing-controls">
-                            <button id="writing-finish-btn" class="primary-btn" aria-label="Geschichte abschicken">
-                                <span class="btn-icon">✅</span> Abschicken
+                            <button id="writing-finish-btn" class="primary-btn">
+                                <span class="btn-icon">✅</span> <span data-i18n="writing.submit">Abschicken</span>
                             </button>
                         </div>
 
@@ -331,24 +331,24 @@
 
                 <div class="guess-flex">
                     <div class="guess-story-block">
-                        <div class="guess-story-title">Geschichte zum Erraten:</div>
-                        <div id="guess-story" class="guess-story-text" role="article" aria-label="Die Geschichte eines anderen Spielers"></div>
+                        <div class="guess-story-title" data-i18n="guess.heading">Geschichte zum Erraten:</div>
+                        <div id="guess-story" class="guess-story-text" role="article"></div>
                     </div>
 
                     <div class="guess-options">
                         <div class="guess-group" id="emoji-guess-group">
-                            <div class="guess-emoji-title" id="emoji-guess-title">Wähle die Emoji-Kombination:</div>
+                            <div class="guess-emoji-title" id="emoji-guess-title" data-i18n="guess.emojiTitle">Wähle die Emoji-Kombination:</div>
                             <div id="emoji-options" class="guess-emoji-options" role="radiogroup" aria-labelledby="emoji-guess-title"></div>
                         </div>
 
                         <div class="guess-group">
-                            <div class="guess-player-title" id="player-guess-title">Wer ist der Autor?</div>
+                            <div class="guess-player-title" id="player-guess-title" data-i18n="guess.authorTitle">Wer ist der Autor?</div>
                             <div id="player-options" class="guess-player-options" role="radiogroup" aria-labelledby="player-guess-title"></div>
                         </div>
                     </div>
 
-                    <button id="submit-guess" class="primary-btn guess-submit-btn" disabled aria-label="Tipp abgeben">
-                        <span class="btn-icon">🎯</span> Tipp abgeben
+                    <button id="submit-guess" class="primary-btn guess-submit-btn" disabled>
+                        <span class="btn-icon">🎯</span> <span data-i18n="guess.submit">Tipp abgeben</span>
                     </button>
                 </div>
             </section>
@@ -364,29 +364,29 @@
 
                     <div class="results-chat-block">
                         <div class="chat-header">
-                            <h3>Ergebnisse</h3>
+                            <h3 data-i18n="results.heading">Ergebnisse</h3>
                         </div>
-                        <div id="results-chat" class="results-chat" role="log" aria-label="Ergebnis-Nachrichten" aria-live="polite"></div>
-                        <button id="results-continue-btn" class="primary-btn results-continue-btn hidden" aria-label="Nächstes Ergebnis anzeigen">
-                            <span class="btn-icon">➡️</span> Weiter
+                        <div id="results-chat" class="results-chat" role="log" aria-live="polite"></div>
+                        <button id="results-continue-btn" class="primary-btn results-continue-btn hidden">
+                            <span class="btn-icon">➡️</span> <span data-i18n="results.continue">Weiter</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- Team-Punkte -->
-                <div id="team-scores" class="team-scores hidden" aria-label="Team-Punktestand"></div>
+                <div id="team-scores" class="team-scores hidden"></div>
 
                 <!-- Rangliste -->
-                <div class="leaderboard-container hidden" id="leaderboard-container" aria-label="Rangliste">
-                    <h3 class="leaderboard-title">Rangliste</h3>
-                    <table id="leaderboard-table" class="leaderboard-table" role="table" aria-label="Punkteübersicht"></table>
+                <div class="leaderboard-container hidden" id="leaderboard-container">
+                    <h3 class="leaderboard-title" data-i18n="results.leaderboard">Rangliste</h3>
+                    <table id="leaderboard-table" class="leaderboard-table" role="table"></table>
 
                     <div class="post-round-actions hidden" id="post-round-actions">
-                        <button id="next-round-btn" class="primary-btn hidden" aria-label="Nächste Runde starten">
-                            <span class="btn-icon">➡️</span> Nächste Runde
+                        <button id="next-round-btn" class="primary-btn hidden">
+                            <span class="btn-icon">➡️</span> <span data-i18n="results.nextRound">Nächste Runde</span>
                         </button>
-                        <button id="new-game-btn" class="secondary-btn hidden" aria-label="Neues Spiel starten">
-                            <span class="btn-icon">🔄</span> Neues Spiel
+                        <button id="new-game-btn" class="secondary-btn hidden">
+                            <span class="btn-icon">🔄</span> <span data-i18n="results.newGame">Neues Spiel</span>
                         </button>
                     </div>
                 </div>
@@ -394,15 +394,15 @@
 
             <!-- ── Spielende (Mehrrunden) ────────────────── -->
             <section id="gameover-section" class="gameover-section hidden" aria-label="Spielende">
-                <h2 class="gameover-title">Spiel beendet!</h2>
-                <table id="gameover-table" class="leaderboard-table" role="table" aria-label="Endergebnis"></table>
-                <div id="gameover-team-scores" class="team-scores hidden" aria-label="Team-Endergebnis"></div>
+                <h2 class="gameover-title" data-i18n="gameOver.title">Spiel beendet!</h2>
+                <table id="gameover-table" class="leaderboard-table" role="table"></table>
+                <div id="gameover-team-scores" class="team-scores hidden"></div>
                 <div class="gameover-actions">
-                    <button id="replay-btn" class="secondary-btn hidden" aria-label="Replay ansehen">
-                        <span class="btn-icon">🎬</span> Replay ansehen
+                    <button id="replay-btn" class="secondary-btn hidden">
+                        <span class="btn-icon">🎬</span> <span data-i18n="gameOver.replay">Replay ansehen</span>
                     </button>
-                    <button id="gameover-new-game-btn" class="primary-btn" aria-label="Neues Spiel starten">
-                        <span class="btn-icon">🔄</span> Neues Spiel
+                    <button id="gameover-new-game-btn" class="primary-btn">
+                        <span class="btn-icon">🔄</span> <span data-i18n="gameOver.newGame">Neues Spiel</span>
                     </button>
                 </div>
             </section>
@@ -423,60 +423,60 @@
     <!-- ── Anleitung ──────────────────────────────────────── -->
     <div id="tutorial-modal" class="tutorial-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="tutorial-heading">
         <div class="tutorial-content">
-            <button id="tutorial-close" class="tutorial-close" aria-label="Anleitung schliessen">&times;</button>
-            <h2 id="tutorial-heading">Willkommen bei IconTale!</h2>
+            <button id="tutorial-close" class="tutorial-close" data-i18n-attr="aria-label:tutorial.close">&times;</button>
+            <h2 id="tutorial-heading" data-i18n="tutorial.title">Willkommen bei IconTale!</h2>
             <div class="tutorial-steps">
                 <div class="tutorial-step">
                     <span class="tutorial-step-num" aria-hidden="true">1</span>
                     <div>
-                        <h4>Lobby erstellen oder beitreten</h4>
-                        <p>Erstelle eine Lobby oder tritt mit einem 6-stelligen Code bei. Mindestens 3 Spieler werden benötigt.</p>
+                        <h4 data-i18n="tutorial.step1.title">Lobby erstellen oder beitreten</h4>
+                        <p data-i18n="tutorial.step1.body">Erstelle eine Lobby oder tritt mit einem 6-stelligen Code bei. Mindestens 3 Spieler werden benötigt.</p>
                     </div>
                 </div>
                 <div class="tutorial-step">
                     <span class="tutorial-step-num" aria-hidden="true">2</span>
                     <div>
-                        <h4>Geschichte schreiben</h4>
-                        <p>Du bekommst zufällige Emojis. Schreibe eine kreative Geschichte, die von ihnen inspiriert ist.</p>
+                        <h4 data-i18n="tutorial.step2.title">Geschichte schreiben</h4>
+                        <p data-i18n="tutorial.step2.body">Du bekommst zufällige Emojis. Schreibe eine kreative Geschichte, die von ihnen inspiriert ist.</p>
                     </div>
                 </div>
                 <div class="tutorial-step">
                     <span class="tutorial-step-num" aria-hidden="true">3</span>
                     <div>
-                        <h4>Raten</h4>
-                        <p>Lies die Geschichte eines anderen Spielers und errate die Emoji-Kombination und den Autor.</p>
+                        <h4 data-i18n="tutorial.step3.title">Raten</h4>
+                        <p data-i18n="tutorial.step3.body">Lies die Geschichte eines anderen Spielers und errate die Emoji-Kombination und den Autor.</p>
                     </div>
                 </div>
                 <div class="tutorial-step">
                     <span class="tutorial-step-num" aria-hidden="true">4</span>
                     <div>
-                        <h4>Punkte & Rangliste</h4>
-                        <p>Sammle Punkte für richtiges Raten und dafür, dass niemand deine Geschichte errät!</p>
+                        <h4 data-i18n="tutorial.step4.title">Punkte & Rangliste</h4>
+                        <p data-i18n="tutorial.step4.body">Sammle Punkte für richtiges Raten und dafür, dass niemand deine Geschichte errät!</p>
                     </div>
                 </div>
             </div>
             <div class="tutorial-modes">
-                <h4>Spielmodi</h4>
+                <h4 data-i18n="tutorial.modes">Spielmodi</h4>
                 <div class="tutorial-mode-grid">
                     <div class="tutorial-mode">
-                        <strong>🎭 Klassisch</strong>
-                        <p>Errate Emojis und Autor.</p>
+                        <strong>🎭 <span data-i18n="mode.classic">Klassisch</span></strong>
+                        <p data-i18n="mode.classic.desc"></p>
                     </div>
                     <div class="tutorial-mode">
-                        <strong>⚡ Speed</strong>
-                        <p>60 Sekunden, max 100 Wörter.</p>
+                        <strong>⚡ <span data-i18n="mode.speed">Speed</span></strong>
+                        <p data-i18n="mode.speed.desc"></p>
                     </div>
                     <div class="tutorial-mode">
-                        <strong>🙈 Blind</strong>
-                        <p>Keine Emoji-Auswahl — nur den Autor erraten.</p>
+                        <strong>🙈 <span data-i18n="mode.blind">Blind</span></strong>
+                        <p data-i18n="mode.blind.desc"></p>
                     </div>
                     <div class="tutorial-mode">
-                        <strong>👥 Team</strong>
-                        <p>Zwei Teams treten gegeneinander an.</p>
+                        <strong>👥 <span data-i18n="mode.team">Team</span></strong>
+                        <p data-i18n="mode.team.desc"></p>
                     </div>
                 </div>
             </div>
-            <button id="tutorial-start-btn" class="primary-btn tutorial-start-btn">Verstanden!</button>
+            <button id="tutorial-start-btn" class="primary-btn tutorial-start-btn" data-i18n="tutorial.ok">Verstanden!</button>
         </div>
     </div>
 
