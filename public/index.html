@@ -282,9 +282,11 @@
                             <div class="timer-time" id="writing-timer-time" aria-live="off">03:00</div>
                             <div class="timer-label">Verbleibend</div>
                         </div>
-                        <div class="timer-bar-outer" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+                        <div class="timer-bar-outer" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" aria-label="Verbleibende Schreibzeit">
                             <div class="timer-bar-inner" id="writing-timer-bar"></div>
                         </div>
+                        <!-- Screen-reader-only milestone announcements (60/30/10/5s and time-up). -->
+                        <div id="writing-timer-announce" class="sr-only" aria-live="polite" aria-atomic="true"></div>
                     </div>
 
                     <div class="writing-main">

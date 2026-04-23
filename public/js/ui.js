@@ -280,14 +280,16 @@ export function showWritingPhase(emojis, writingStartTime, settings, round, tota
     const timerDuration = settings.timerDuration || 180;
     const start = writingStartTime || Date.now();
     state.writingTimeLeft = Math.max(0, timerDuration - Math.floor((Date.now() - start) / 1000));
+    state.writingMilestonesAnnounced = new Set();
     updateWritingTimer(timerDuration);
 
     if (state.writingTimer) clearInterval(state.writingTimer);
     state.writingTimer = setInterval(() => {
+        const prev = state.writingTimeLeft;
         state.writingTimeLeft = Math.max(0, timerDuration - Math.floor((Date.now() - start) / 1000));
         updateWritingTimer(timerDuration);
+        announceTimerMilestones(prev, state.writingTimeLeft);
 
-        // Tick sound in last 10 seconds
         if (state.writingTimeLeft <= 10 && state.writingTimeLeft > 0) playTick();
 
         if (state.writingTimeLeft <= 0) {
@@ -304,6 +306,36 @@ function updateWritingTimer(total) {
     const pct = Math.max(0, state.writingTimeLeft / total);
     dom.writingTimerBar.style.height = `${pct * 100}%`;
     dom.writingTimerTime.classList.toggle('timer-urgent', state.writingTimeLeft <= 30);
+
+    const bar = dom.writingTimerBar?.parentElement;
+    if (bar && bar.getAttribute('role') === 'progressbar') {
+        bar.setAttribute('aria-valuenow', Math.round(pct * 100));
+    }
+}
+
+// Milestones at which we announce the remaining time to assistive tech.
+// Chosen so that sighted users see the countdown every second while
+// screen readers only hear informative breakpoints and the final cue.
+const TIMER_MILESTONES = [60, 30, 10, 5];
+
+function announceTimerMilestones(prev, now) {
+    if (!dom.writingTimerAnnounce) return;
+    const announced = state.writingMilestonesAnnounced ?? new Set();
+
+    for (const m of TIMER_MILESTONES) {
+        if (prev > m && now <= m && !announced.has(m)) {
+            announced.add(m);
+            dom.writingTimerAnnounce.textContent = `Noch ${m} Sekunden zum Schreiben.`;
+            state.writingMilestonesAnnounced = announced;
+            return;
+        }
+    }
+
+    if (prev > 0 && now === 0 && !announced.has(0)) {
+        announced.add(0);
+        dom.writingTimerAnnounce.textContent = 'Zeit abgelaufen.';
+        state.writingMilestonesAnnounced = announced;
+    }
 }
 
 // ── Guess Phase ─────────────────────────────────────────────

@@ -49,6 +49,7 @@ export const dom = {
     writingSection:    $('writing-section'),
     writingTimerTime:  $('writing-timer-time'),
     writingTimerBar:   $('writing-timer-bar'),
+    writingTimerAnnounce: $('writing-timer-announce'),
     writingEmojis:     $('writing-emojis'),
     writingStory:      $('writing-story'),
     writingFinishBtn:  $('writing-finish-btn'),
