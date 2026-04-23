@@ -24,6 +24,14 @@ const missing = new Set(); // already-warned keys
 let current = DEFAULT_LOCALE;
 
 function resolveBrowserLocale() {
+    // ?lang=en overrides persisted choice and navigator.language so
+    // hreflang deep-links and QA URLs always pick the right locale.
+    try {
+        const urlLocale = new URLSearchParams(window.location.search)
+            .get('lang');
+        if (urlLocale && SUPPORTED_LOCALES.includes(urlLocale)) return urlLocale;
+    } catch { /* URLSearchParams unavailable (very old WebView) */ }
+
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved && SUPPORTED_LOCALES.includes(saved)) return saved;
 
