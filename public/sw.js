@@ -24,6 +24,7 @@ const SHELL_ASSETS = [
     '/js/socket-handlers.js',
     '/js/replay.js',
     '/js/sw-register.js',
+    '/js/toast.js',
     '/manifest.json',
     '/favicon.ico',
     '/icon-192.png',

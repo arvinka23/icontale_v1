@@ -477,6 +477,12 @@
     <!-- Achievement Toast Container -->
     <div id="achievement-toasts" aria-live="polite" aria-label="Achievements"></div>
 
+    <!-- General notification toasts (info/success/error) -->
+    <div id="toast-stack" class="toast-stack" aria-label="Benachrichtigungen">
+        <div class="toast-region toast-region-status" role="status" aria-live="polite"></div>
+        <div class="toast-region toast-region-alert" role="alert" aria-live="assertive" aria-atomic="true"></div>
+    </div>
+
     <!-- Replay Viewer Modal -->
     <div id="replay-modal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Replay Viewer">
         <div class="modal-content replay-viewer">
