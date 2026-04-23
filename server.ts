@@ -78,19 +78,33 @@ app.use(
     })
 );
 
-// Security headers (allow inline scripts/styles for SPA + websocket)
+// Security headers.
+//
+// CSP notes:
+//   - No inline <script> is used in the app anymore (SW registration was
+//     extracted into /js/sw-register.js), so we do NOT include
+//     'unsafe-inline' in script-src. This mitigates most reflected XSS
+//     attack vectors at the browser level.
+//   - style-src still allows 'unsafe-inline' because the design system
+//     relies on inline style attributes (timer bar width, leaderboard
+//     tooltips, etc.). Removing this is tracked in the improvement plan.
+//   - Fonts are self-hosted, so no third-party font hosts are whitelisted.
 app.use(
     helmet({
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
-                scriptSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-                styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-                fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+                scriptSrc: ["'self'"],
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                fontSrc: ["'self'"],
                 connectSrc: ["'self'", 'ws:', 'wss:'],
                 imgSrc: ["'self'", 'data:'],
+                objectSrc: ["'none'"],
+                baseUri: ["'self'"],
+                frameAncestors: ["'none'"],
             },
         },
+        crossOriginEmbedderPolicy: false,
     })
 );
 
