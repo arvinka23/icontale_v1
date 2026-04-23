@@ -46,13 +46,65 @@ dom.tutorialClose.onclick = hideTutorial;
 dom.tutorialStart.onclick = hideTutorial;
 dom.helpBtn.onclick = showTutorial;
 
-// Word count (writing phase)
+// ── Story draft autosave ─────────────────────────────────────
+// Persist the current textarea contents in sessionStorage so an
+// accidental reload or browser crash during the writing phase does
+// not silently wipe the player's story. Keyed per lobby + round so
+// drafts don't leak between games in the same tab.
+function draftKey() {
+    if (!state.roomCode) return null;
+    const round = dom.roundCurrent?.textContent || '0';
+    return `icontale_draft_${state.roomCode}_r${round}`;
+}
+
+function saveDraft() {
+    const key = draftKey();
+    if (!key) return;
+    const value = dom.writingStory.value;
+    if (value && !state.storySubmitted) {
+        try { sessionStorage.setItem(key, value); } catch { /* storage full / disabled */ }
+    } else {
+        try { sessionStorage.removeItem(key); } catch { /* noop */ }
+    }
+}
+
+export function restoreDraftIfAny() {
+    const key = draftKey();
+    if (!key) return;
+    try {
+        const saved = sessionStorage.getItem(key);
+        if (saved && !dom.writingStory.value) {
+            dom.writingStory.value = saved;
+            dom.wordCount.textContent = countWords(saved);
+        }
+    } catch { /* ignore */ }
+}
+
+export function clearDraft() {
+    const key = draftKey();
+    if (!key) return;
+    try { sessionStorage.removeItem(key); } catch { /* ignore */ }
+}
+
+let draftSaveTimer = null;
+function scheduleDraftSave() {
+    if (draftSaveTimer) return;
+    draftSaveTimer = setTimeout(() => {
+        draftSaveTimer = null;
+        saveDraft();
+    }, 1500);
+}
+
+// Word count (writing phase) + debounced draft autosave
 dom.writingStory.addEventListener('input', () => {
     const words = countWords(dom.writingStory.value);
     dom.wordCount.textContent = words;
     const limit = parseInt(dom.wordLimit.textContent) || 500;
     dom.wordCount.classList.toggle('over-limit', words > limit);
+    scheduleDraftSave();
 });
+
+window.addEventListener('beforeunload', saveDraft);
 
 // Submit / Edit story toggle
 dom.writingFinishBtn.onclick = () => {
@@ -68,6 +120,7 @@ dom.writingFinishBtn.onclick = () => {
         dom.writingStory.disabled = true;
         dom.writingSection.classList.add('writing-finished');
         dom.writingFinishBtn.innerHTML = '<span class="btn-icon">✏️</span> Bearbeiten';
+        clearDraft();
         playClick();
     } else {
         state.storySubmitted = false;

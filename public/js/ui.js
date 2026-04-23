@@ -277,6 +277,12 @@ export function showWritingPhase(emojis, writingStartTime, settings, round, tota
     dom.writingSection.classList.remove('writing-finished');
     dom.wordCount.textContent = '0';
 
+    // Restore any draft the player typed before an accidental reload.
+    // Dynamic import keeps ui.js <-> main.js out of a static cycle.
+    import('./main.js').then((m) => {
+        if (typeof m.restoreDraftIfAny === 'function') m.restoreDraftIfAny();
+    }).catch(() => { /* no draft helper available, e.g. stale cache */ });
+
     // Progress
     dom.writingProgress.classList.remove('hidden');
     dom.storiesSubmitted.textContent = '0';
