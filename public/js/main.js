@@ -3,7 +3,8 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { state } from './state.js';
-import { dom, showError, countWords } from './dom.js';
+import { dom, countWords } from './dom.js';
+import { toastError } from './toast.js';
 import {
     loadUserEmoji, randomizeEmoji, setTab, initSettingsUI,
     gatherSettings, showTutorial, hideTutorial,
@@ -56,10 +57,10 @@ dom.writingStory.addEventListener('input', () => {
 dom.writingFinishBtn.onclick = () => {
     if (!state.storySubmitted) {
         const story = dom.writingStory.value.trim();
-        if (!story) return showError('Bitte schreibe eine Geschichte.');
+        if (!story) return toastError('Bitte schreibe eine Geschichte.');
         const words = countWords(story);
         const limit = parseInt(dom.wordLimit.textContent) || 500;
-        if (words > limit) return showError(`Max ${limit} Wörter erlaubt (aktuell: ${words}).`);
+        if (words > limit) return toastError(`Max ${limit} Wörter erlaubt (aktuell: ${words}).`);
 
         socket.emit('submit-story', { roomCode: state.roomCode, story });
         state.storySubmitted = true;
@@ -105,13 +106,13 @@ dom.menuActionBtn.onclick = () => {
     const username = dom.username.value.trim();
     const userEmoji = localStorage.getItem('icontale_user_emoji') || '😀';
 
-    if (!username) return showError('Bitte gib einen Namen ein.');
+    if (!username) return toastError('Bitte gib einen Namen ein.');
 
     if (dom.tabCreate.classList.contains('active')) {
         socket.emit('create-lobby', { username, emoji: userEmoji });
     } else {
         const roomCode = dom.roomCodeInput.value.trim().toUpperCase();
-        if (roomCode.length !== 6) return showError('Bitte gib einen gültigen 6-stelligen Code ein.');
+        if (roomCode.length !== 6) return toastError('Bitte gib einen gültigen 6-stelligen Code ein.');
         socket.emit('join-lobby', { username, roomCode, emoji: userEmoji });
     }
     playClick();
@@ -119,7 +120,7 @@ dom.menuActionBtn.onclick = () => {
 
 dom.spectatorBtn.onclick = () => {
     const roomCode = dom.roomCodeInput.value.trim().toUpperCase();
-    if (roomCode.length !== 6) return showError('Bitte gib einen gültigen 6-stelligen Code ein.');
+    if (roomCode.length !== 6) return toastError('Bitte gib einen gültigen 6-stelligen Code ein.');
     socket.emit('join-spectator', { roomCode });
 };
 

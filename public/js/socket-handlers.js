@@ -3,7 +3,8 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { state, Phase, resetGameState, saveSession, clearSession, getStoredSession, forcePhase } from './state.js';
-import { dom, showError } from './dom.js';
+import { dom } from './dom.js';
+import { toastInfo, toastSuccess, toastError } from './toast.js';
 import {
     showLobby, updatePlayersList, updateSettingsDisplay, updateSpectatorCount,
     showWritingPhase, showGuessPhase, showResultsPhase, advanceResults,
@@ -34,28 +35,27 @@ export function registerSocketHandlers(socket) {
     socket.on('disconnect', (reason) => {
         console.warn('[socket] Disconnected:', reason);
         if (reason === 'io server disconnect') {
-            // Server kicked us — don't auto-reconnect
-            showError('Verbindung vom Server getrennt.');
+            toastError('Verbindung vom Server getrennt.');
         } else if (state.phase !== Phase.MENU) {
-            showError('Verbindung verloren — versuche neu zu verbinden...');
+            toastInfo('Verbindung verloren — versuche neu zu verbinden…');
         }
     });
 
     socket.on('connect_error', (err) => {
         console.error('[socket] Connection error:', err.message);
         if (state.phase === Phase.MENU) {
-            showError('Server nicht erreichbar. Bitte später versuchen.');
+            toastError('Server nicht erreichbar. Bitte später versuchen.');
         }
     });
 
     socket.io.on('reconnect', (attempt) => {
         console.info('[socket] Reconnected after', attempt, 'attempts');
-        showError('Verbindung wiederhergestellt!');
+        toastSuccess('Verbindung wiederhergestellt.');
     });
 
     socket.io.on('reconnect_failed', () => {
         console.error('[socket] Reconnect failed permanently');
-        showError('Verbindung fehlgeschlagen. Bitte Seite neu laden.');
+        toastError('Verbindung fehlgeschlagen. Bitte Seite neu laden.');
         playError();
     });
 
@@ -69,7 +69,7 @@ export function registerSocketHandlers(socket) {
         saveSession(roomCode);
         showLobby(roomCode, players, settings);
         if (started && gamePhase !== 'lobby') {
-            showError('Verbindung wiederhergestellt! Warte auf die nächste Phase...');
+            toastInfo('Verbindung wiederhergestellt. Warte auf die nächste Phase…');
         }
     });
 
@@ -110,31 +110,31 @@ export function registerSocketHandlers(socket) {
     });
 
     socket.on('lobby-error', ({ message }) => {
-        showError(message);
+        toastError(message);
         playError();
     });
 
     socket.on('lobby-closed', ({ reason } = {}) => {
         clearSession();
-        showError(reason || 'Lobby wurde geschlossen.');
+        toastError(reason || 'Lobby wurde geschlossen.');
         setTimeout(() => window.location.reload(), 2000);
     });
 
     socket.on('host-changed', ({ newHostId }) => {
         state.isHost = (newHostId === socket.id);
-        if (state.isHost) showError('Du bist jetzt der Host!');
+        if (state.isHost) toastSuccess('Du bist jetzt der Host.');
     });
 
     socket.on('player-disconnected', ({ name, reconnectTimeout }) => {
-        showError(`${name} hat die Verbindung verloren. Wartezeit: ${Math.round(reconnectTimeout / 1000)}s`);
+        toastInfo(`${name} hat die Verbindung verloren (${Math.round(reconnectTimeout / 1000)}s Wartezeit).`);
     });
 
     socket.on('player-reconnected', ({ name }) => {
-        showError(`${name} ist wieder verbunden!`);
+        toastSuccess(`${name} ist wieder verbunden.`);
     });
 
     socket.on('server-shutdown', ({ message }) => {
-        showError(message || 'Server wird neu gestartet...');
+        toastError(message || 'Server wird neu gestartet…');
     });
 
     // ── Spectator Events ────────────────────────────────────
@@ -253,7 +253,7 @@ export function registerSocketHandlers(socket) {
     });
 
     socket.on('story-error', ({ message }) => {
-        showError(message);
+        toastError(message);
         playError();
     });
 }

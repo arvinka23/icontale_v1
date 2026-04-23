@@ -1567,21 +1567,6 @@ textarea {
 }
 
 
-/* ── Error Message ────────────────────────────────────────── */
-.error-message {
-    color: var(--error);
-    font-weight: 500;
-    font-size: 0.95rem;
-    margin-top: var(--space-md);
-    padding: 0.75rem 1rem;
-    background: var(--error-soft);
-    border: 1px solid oklch(from var(--error) l c h / 0.2);
-    border-radius: var(--radius-md);
-    text-align: center;
-    animation: fadeIn 0.3s var(--ease);
-}
-
-
 /* ── 7. Animations ────────────────────────────────────────── */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(8px); }

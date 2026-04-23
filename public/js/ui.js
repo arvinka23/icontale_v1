@@ -4,7 +4,7 @@
 
 import { EMOJIS, EMOJI_NAMES, MODE_DESCRIPTIONS } from './constants.js';
 import { state, Phase, setPhase, forcePhase, resetGameState } from './state.js';
-import { dom, hideAllSections, showError, countWords, formatTime, typeText } from './dom.js';
+import { dom, hideAllSections, formatTime, typeText } from './dom.js';
 import { playClick, playSuccess, playTick } from './sounds.js';
 
 // ── Emoji Selection ─────────────────────────────────────────
