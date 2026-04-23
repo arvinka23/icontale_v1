@@ -30,6 +30,12 @@ import { updateStatsAndCheck, ACHIEVEMENTS } from './lib/achievements';
 import { recordEvent, finalizeReplay, getReplay } from './lib/replay';
 import { getRandomEmojis } from './lib/emoji-packs';
 import {
+    registerCounter,
+    registerGauge,
+    registerSnapshotGauge,
+    renderMetrics,
+} from './lib/metrics';
+import {
     startRound,
     startGuessingPhase,
     processGameResults,
