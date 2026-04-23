@@ -7,3 +7,5 @@ yarn-debug.log*
 yarn-error.log*
 icontale_v1-main/
 public/styles.min.css
+public/styles.*.css
+!public/styles.css
