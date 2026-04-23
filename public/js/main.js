@@ -140,6 +140,70 @@ dom.roomCodeInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') dom.menuActionBtn.click();
 });
 
+// ── Lobby share (copy code / link) ──────────────────────────
+
+async function copyToClipboard(text) {
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            return true;
+        }
+    } catch (_) { /* fall through to the legacy path */ }
+
+    try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+    } catch {
+        return false;
+    }
+}
+
+if (dom.copyCodeBtn) {
+    dom.copyCodeBtn.onclick = async () => {
+        if (!state.roomCode) return;
+        const ok = await copyToClipboard(state.roomCode);
+        const { toastSuccess, toastError } = await import('./toast.js');
+        if (ok) toastSuccess(`Lobby-Code ${state.roomCode} kopiert.`);
+        else    toastError('Kopieren fehlgeschlagen. Bitte den Code manuell übernehmen.');
+    };
+}
+
+if (dom.copyLinkBtn) {
+    dom.copyLinkBtn.onclick = async () => {
+        if (!state.roomCode) return;
+        const url = new URL(window.location.href);
+        url.search = '';
+        url.hash = '';
+        url.searchParams.set('room', state.roomCode);
+        const ok = await copyToClipboard(url.toString());
+        const { toastSuccess, toastError } = await import('./toast.js');
+        if (ok) toastSuccess('Einladungslink kopiert.');
+        else    toastError('Kopieren fehlgeschlagen.');
+    };
+}
+
+// ── Deeplink (?room=XYZ123) ─────────────────────────────────
+
+(function prefillFromDeeplink() {
+    const params = new URLSearchParams(window.location.search);
+    const candidate = (params.get('room') || '').trim().toUpperCase();
+    if (!/^[A-Z0-9]{6}$/.test(candidate)) return;
+
+    setTab('join');
+    dom.roomCodeInput.value = candidate;
+    // Keep the username input focused so the user just has to type
+    // their nickname and press Enter — no extra clicks.
+    setTimeout(() => dom.username.focus(), 0);
+})();
+
 // ── Initialization ──────────────────────────────────────────
 initTheme();
 loadUserEmoji();

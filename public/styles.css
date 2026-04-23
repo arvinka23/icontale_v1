@@ -564,6 +564,19 @@ textarea {
     margin-top: var(--space-sm);
 }
 
+.lobby-share {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+    margin-top: var(--space-sm);
+}
+
+.lobby-share-btn {
+    font-size: 0.85rem;
+    padding: 0.45rem 0.9rem;
+}
+
 /* Players Grid */
 .lobby-players-grid {
     display: grid;

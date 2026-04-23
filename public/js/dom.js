@@ -25,6 +25,8 @@ export const dom = {
     // Lobby
     lobby:          $('lobby'),
     roomCode:       $('room-code'),
+    copyCodeBtn:    $('copy-code-btn'),
+    copyLinkBtn:    $('copy-link-btn'),
     playersGrid:    $('players-grid'),
     startGame:      $('start-game'),
     startHint:      $('start-hint'),

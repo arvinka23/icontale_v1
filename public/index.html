@@ -180,6 +180,14 @@
             <section id="lobby" class="lobby-section hidden" aria-label="Lobby">
                 <div class="lobby-header">
                     <h2 class="lobby-title">Lobby <span id="room-code" class="room-code"></span></h2>
+                    <div class="lobby-share">
+                        <button id="copy-code-btn" class="secondary-btn lobby-share-btn" type="button" aria-label="Lobby-Code in die Zwischenablage kopieren">
+                            <span class="btn-icon">📋</span> Code kopieren
+                        </button>
+                        <button id="copy-link-btn" class="secondary-btn lobby-share-btn" type="button" aria-label="Einladungslink in die Zwischenablage kopieren">
+                            <span class="btn-icon">🔗</span> Link kopieren
+                        </button>
+                    </div>
                     <p class="lobby-subtitle">Warte auf Spieler...</p>
                     <div id="spectator-count" class="spectator-count hidden" aria-live="polite">
                         <span class="btn-icon">👁️</span> <span id="spectator-num">0</span> Zuschauer
