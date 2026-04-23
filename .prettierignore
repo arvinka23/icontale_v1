@@ -1,0 +1,17 @@
+# Build output
+dist/
+
+# Dependencies
+node_modules/
+
+# Generated assets
+public/styles.min.css
+public/styles.*.css
+public/og-image.*
+public/fonts/
+
+# Lockfiles — let the package manager own their format so lint-staged
+# doesn't rewrite 7 MB on every unrelated commit.
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

@@ -9,3 +9,9 @@ icontale_v1-main/
 public/styles.min.css
 public/styles.*.css
 !public/styles.css
+
+# Test output
+coverage/
+.vitest/
+test-results/
+playwright-report/

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)",
+    ":prConcurrentLimit10",
+    ":timezone(Europe/Zurich)"
+  ],
+  "schedule": ["before 4am on monday"],
+  "labels": ["dependencies"],
+  "rangeStrategy": "bump",
+  "rebaseWhen": "conflicted",
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "Dependency Dashboard",
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["dependencies", "security"],
+    "schedule": ["at any time"]
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": false,
+    "schedule": ["before 4am on the first day of the month"]
+  },
+  "packageRules": [
+    {
+      "description": "Group TypeScript-related updates so they land together.",
+      "matchPackageNames": ["typescript", "tsx"],
+      "matchPackagePatterns": ["^@types/"],
+      "groupName": "typescript"
+    },
+    {
+      "description": "Group vitest + coverage so matching majors stay pinned.",
+      "matchPackageNames": ["vitest", "@vitest/coverage-v8"],
+      "groupName": "vitest"
+    },
+    {
+      "description": "Group all lint / format tooling.",
+      "matchPackageNames": [
+        "eslint",
+        "eslint-config-prettier",
+        "prettier",
+        "husky",
+        "lint-staged"
+      ],
+      "groupName": "lint-format"
+    },
+    {
+      "description": "Pin Node LTS; major upgrades need human review.",
+      "matchManagers": ["npm"],
+      "matchDepTypes": ["engines"],
+      "enabled": false
+    },
+    {
+      "description": "Auto-merge safe patch bumps for devDependencies.",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    }
+  ]
+}
