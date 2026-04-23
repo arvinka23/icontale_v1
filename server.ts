@@ -304,8 +304,20 @@ const deps: GameFlowDeps = {
 io.on('connection', (socket: Socket) => {
     log.info({ socketId: socket.id }, 'Client connected');
 
-    socket.use(([event], next) => {
+    socket.use((packet, next) => {
+        const event = packet[0];
         if (typeof event !== 'string') return next();
+
+        const args = packet.slice(1);
+        const bytes = rateLimiter.estimatePayloadBytes(args);
+        if (bytes > rateLimiter.MAX_PAYLOAD_BYTES) {
+            log.warn(
+                { socketId: socket.id, event, bytes, max: rateLimiter.MAX_PAYLOAD_BYTES },
+                'Socket payload too large — dropping'
+            );
+            return next(new Error('Payload too large'));
+        }
+
         if (!rateLimiter.allowEvent(socket.id, event)) {
             return next(new Error('Rate limited'));
         }

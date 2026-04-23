@@ -137,3 +137,19 @@ export function __reset(): void {
     globalBuckets.clear();
     eventBuckets.clear();
 }
+
+/**
+ * Best-effort JSON byte size estimator for Socket.io payloads.
+ * Binary frames and circular references both return Infinity so
+ * the caller treats them as rejections.
+ */
+export function estimatePayloadBytes(args: unknown[]): number {
+    try {
+        return Buffer.byteLength(JSON.stringify(args ?? []), 'utf8');
+    } catch {
+        return Number.POSITIVE_INFINITY;
+    }
+}
+
+/** Max allowed bytes for a single Socket.io event payload. */
+export const MAX_PAYLOAD_BYTES = 32 * 1024;

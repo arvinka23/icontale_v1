@@ -3,8 +3,10 @@ import {
     allowEvent,
     forgetSocket,
     sweep,
+    estimatePayloadBytes,
     EVENT_QUOTAS,
     GLOBAL_QUOTA,
+    MAX_PAYLOAD_BYTES,
     __reset,
 } from '../lib/socket-rate-limit';
 
@@ -66,6 +68,22 @@ describe('socket-rate-limit', () => {
         for (let i = 0; i < quota.max; i++) {
             expect(allowEvent('sock-1', 'submit-story')).toBe(true);
         }
+    });
+
+    it('estimatePayloadBytes measures small args in bytes', () => {
+        expect(estimatePayloadBytes([{ roomCode: 'ABCDEF' }])).toBeGreaterThan(0);
+        expect(estimatePayloadBytes([])).toBe(2); // '[]'
+    });
+
+    it('estimatePayloadBytes flags circular references as rejectable', () => {
+        const a = {};
+        a.self = a;
+        expect(estimatePayloadBytes([a])).toBe(Number.POSITIVE_INFINITY);
+    });
+
+    it('MAX_PAYLOAD_BYTES is a sensible limit', () => {
+        expect(MAX_PAYLOAD_BYTES).toBeGreaterThan(1024);
+        expect(MAX_PAYLOAD_BYTES).toBeLessThan(1024 * 1024);
     });
 
     it('sweep removes stale buckets after 2x window', () => {
