@@ -30,6 +30,16 @@ describe('Integration Tests', () => {
             const res = await fetch(`${baseUrl}/nonexistent`);
             expect(res.status).toBe(404);
         });
+
+        it('GET /metrics returns Prometheus text with registered metrics', async () => {
+            const res = await fetch(`${baseUrl}/metrics`);
+            expect(res.status).toBe(200);
+            expect(res.headers.get('content-type')).toMatch(/text\/plain/);
+            const body = await res.text();
+            expect(body).toContain('# HELP icontale_test_events_total');
+            expect(body).toContain('# TYPE icontale_test_events_total counter');
+            expect(body).toContain('icontale_test_events_total 1');
+        });
     });
 
     describe('Socket Tests: Lobby Management', () => {
