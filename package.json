@@ -39,6 +39,7 @@
   },
   "homepage": "https://arvinka23.github.io/icontale",
   "dependencies": {
+    "@sentry/node": "^10.50.0",
     "cors": "^2.8.6",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",

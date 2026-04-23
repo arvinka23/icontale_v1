@@ -2,11 +2,12 @@
 //  UI Module — All rendering and interaction logic
 // ═══════════════════════════════════════════════════════════════
 
-import { EMOJIS, EMOJI_NAMES, MODE_DESCRIPTIONS } from './constants.js';
+import { EMOJIS, EMOJI_NAMES } from './constants.js';
 import { state, Phase, setPhase, forcePhase, resetGameState } from './state.js';
 import { dom, hideAllSections, formatTime, typeText } from './dom.js';
 import { playClick, playSuccess, playTick } from './sounds.js';
 import { enhanceRadioGroup } from './radio-nav.js';
+import { t } from './i18n.js';
 
 // ── Local helpers ───────────────────────────────────────────
 /**
@@ -66,7 +67,7 @@ export function setTab(tab) {
         dom.tabJoin.classList.remove('active');
         dom.roomCodeGroup.classList.add('hidden');
         dom.spectatorBtn.classList.add('hidden');
-        dom.menuActionBtn.innerHTML = '<span class="btn-icon">🚀</span> Lobby erstellen';
+        dom.menuActionBtn.innerHTML = `<span class="btn-icon">🚀</span> ${t('menu.action.create')}`;
         dom.tabCreate.setAttribute('aria-selected', 'true');
         dom.tabJoin.setAttribute('aria-selected', 'false');
     } else {
@@ -74,7 +75,7 @@ export function setTab(tab) {
         dom.tabJoin.classList.add('active');
         dom.roomCodeGroup.classList.remove('hidden');
         dom.spectatorBtn.classList.remove('hidden');
-        dom.menuActionBtn.innerHTML = '<span class="btn-icon">🎯</span> Lobby beitreten';
+        dom.menuActionBtn.innerHTML = `<span class="btn-icon">🎯</span> ${t('menu.action.join')}`;
         dom.tabCreate.setAttribute('aria-selected', 'false');
         dom.tabJoin.setAttribute('aria-selected', 'true');
     }
@@ -89,7 +90,7 @@ export function initSettingsUI(emitFn) {
     }
 
     setupSettingGroup('mode-options', val => {
-        dom.modeDesc.textContent = MODE_DESCRIPTIONS[val] || '';
+        dom.modeDesc.textContent = t(`mode.${val}.desc`);
         if (val === 'speed') {
             setSettingActive('timer-options', '60');
             setSettingActive('wordlimit-options', '100');
@@ -191,15 +192,20 @@ export function gatherSettings() {
     };
 }
 
+document.addEventListener('icontale:rerender-settings', () => {
+    if (state.settings && !state.isHost) renderSettingsDisplay(state.settings);
+});
+
 function renderSettingsDisplay(settings) {
-    const modeNames = { classic: '🎭 Klassisch', speed: '⚡ Speed', blind: '🙈 Blind', team: '👥 Team' };
+    const modeIcon = { classic: '🎭', speed: '⚡', blind: '🙈', team: '👥' }[settings.gameMode] || '';
+    const modeLabel = `${modeIcon} ${t(`mode.${settings.gameMode}`) || settings.gameMode}`.trim();
     dom.settingsDisplay.innerHTML = `
         <div class="settings-summary">
-            <span class="setting-chip">${modeNames[settings.gameMode] || settings.gameMode}</span>
-            <span class="setting-chip">⏱️ ${Math.floor(settings.timerDuration / 60)} Min</span>
-            <span class="setting-chip">📝 Max ${settings.wordLimit} Wörter</span>
-            <span class="setting-chip">🎲 ${settings.emojiCount} Emojis</span>
-            <span class="setting-chip">🔄 ${settings.rounds} Runde${settings.rounds > 1 ? 'n' : ''}</span>
+            <span class="setting-chip">${modeLabel}</span>
+            <span class="setting-chip">⏱️ ${t('settings.chip.timer', { min: Math.floor(settings.timerDuration / 60) })}</span>
+            <span class="setting-chip">📝 ${t('settings.chip.words', { n: settings.wordLimit })}</span>
+            <span class="setting-chip">🎲 ${t('settings.chip.emojis', { n: settings.emojiCount })}</span>
+            <span class="setting-chip">🔄 ${t('settings.chip.rounds', { n: settings.rounds })}</span>
         </div>
     `;
     dom.settingsDisplay.classList.remove('hidden');
@@ -224,7 +230,7 @@ export function showLobby(roomCode, players, settings) {
         setSettingActive('wordlimit-options', String(settings.wordLimit));
         setSettingActive('emojicount-options', String(settings.emojiCount));
         setSettingActive('rounds-options', String(settings.rounds));
-        dom.modeDesc.textContent = MODE_DESCRIPTIONS[settings.gameMode] || '';
+        dom.modeDesc.textContent = t(`mode.${settings.gameMode}.desc`);
     } else {
         dom.settingsPanel.classList.add('hidden');
         dom.startGame.classList.add('hidden');
@@ -261,8 +267,8 @@ export function updatePlayersList(players) {
     if (state.isHost) {
         dom.startGame.disabled = players.length < 3;
         dom.startHint.textContent = players.length < 3
-            ? `Noch ${3 - players.length} Spieler nötig`
-            : `${players.length} Spieler bereit!`;
+            ? t('lobby.start.hint.needMore', { n: 3 - players.length })
+            : t('lobby.start.hint.ready', { n: players.length });
     }
 }
 
@@ -382,7 +388,7 @@ function announceTimerMilestones(prev, now) {
     for (const m of TIMER_MILESTONES) {
         if (prev > m && now <= m && !announced.has(m)) {
             announced.add(m);
-            dom.writingTimerAnnounce.textContent = `Noch ${m} Sekunden zum Schreiben.`;
+            dom.writingTimerAnnounce.textContent = t('writing.timer.announce', { seconds: m });
             state.writingMilestonesAnnounced = announced;
             return;
         }
@@ -390,7 +396,7 @@ function announceTimerMilestones(prev, now) {
 
     if (prev > 0 && now === 0 && !announced.has(0)) {
         announced.add(0);
-        dom.writingTimerAnnounce.textContent = 'Zeit abgelaufen.';
+        dom.writingTimerAnnounce.textContent = t('writing.timer.upVoice');
         state.writingMilestonesAnnounced = announced;
     }
 }
@@ -747,7 +753,7 @@ export function showSpectatorView(info) {
     }
     hideAllSections();
     dom.spectatorSection.classList.remove('hidden');
-    dom.spectatorInfo.innerHTML = `<p>${info || 'Du schaust dem Spiel zu.'}</p>`;
+    dom.spectatorInfo.innerHTML = `<p>${info || t('spectator.lead')}</p>`;
 }
 
 // ── Tutorial ────────────────────────────────────────────────

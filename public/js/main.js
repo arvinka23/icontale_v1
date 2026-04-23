@@ -13,24 +13,42 @@ import { loadSoundPreference, toggleSound, playClick } from './sounds.js';
 import { registerSocketHandlers } from './socket-handlers.js';
 import { openReplay } from './replay.js';
 import { initTheme } from './theme.js';
+import { initI18n, t, setLocale, getLocale, getSupportedLocales } from './i18n.js';
 
-// ── Socket.io (loaded globally via <script> tag) ────────────
-// socket.io.js exposes a global `io(opts)` factory on window. We
-// narrow it to the surface public/js actually uses so the checker
-// can verify every emit/on call.
-const socket = /** @type {import('./types').ClientSocket} */ (
-    /** @type {(opts?: object) => unknown} */ (
-        /** @type {any} */ (window).io
-    )({
-        reconnection: true,
-        reconnectionAttempts: 10,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
-    })
-);
+// ── Socket.io ───────────────────────────────────────────────
+// Fetch a short-lived handshake token before the WebSocket upgrade
+// so the server can verify that whoever is connecting actually
+// loaded the page first. If the fetch fails (offline, proxy error)
+// we still try to connect; the server logs the missing token and
+// — unless ENFORCE_SOCKET_AUTH is set — accepts the connection so
+// the existing UX continues to work.
+async function fetchSocketToken() {
+    try {
+        const res = await fetch('/api/socket-token', { credentials: 'same-origin' });
+        if (!res.ok) return '';
+        const data = await res.json();
+        return typeof data.token === 'string' ? data.token : '';
+    } catch (_) {
+        return '';
+    }
+}
+
+const socket = window.io({
+    reconnection: true,
+    reconnectionAttempts: 10,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    autoConnect: false,
+    auth: (cb) => {
+        fetchSocketToken().then((token) => cb({ token }));
+    },
+});
 
 // Register all socket event handlers
 registerSocketHandlers(socket);
+
+// Now that handlers are wired, kick off the connect.
+socket.connect();
 
 // ── Settings Emit ───────────────────────────────────────────
 function emitSettings() {
@@ -117,10 +135,10 @@ window.addEventListener('beforeunload', saveDraft);
 dom.writingFinishBtn.onclick = () => {
     if (!state.storySubmitted) {
         const story = dom.writingStory.value.trim();
-        if (!story) return toastError('Bitte schreibe eine Geschichte.');
+        if (!story) return toastError(t('writing.error.empty'));
         const words = countWords(story);
         const limit = parseInt(dom.wordLimit.textContent) || 500;
-        if (words > limit) return toastError(`Max ${limit} Wörter erlaubt (aktuell: ${words}).`);
+        if (words > limit) return toastError(t('writing.error.tooLong', { limit, words }));
 
         socket.emit('submit-story', { roomCode: state.roomCode, story });
         state.storySubmitted = true;
@@ -168,13 +186,13 @@ dom.menuActionBtn.onclick = () => {
     const username = dom.username.value.trim();
     const userEmoji = localStorage.getItem('icontale_user_emoji') || '😀';
 
-    if (!username) return toastError('Bitte gib einen Namen ein.');
+    if (!username) return toastError(t('error.usernameRequired'));
 
     if (dom.tabCreate.classList.contains('active')) {
         socket.emit('create-lobby', { username, emoji: userEmoji });
     } else {
         const roomCode = dom.roomCodeInput.value.trim().toUpperCase();
-        if (roomCode.length !== 6) return toastError('Bitte gib einen gültigen 6-stelligen Code ein.');
+        if (roomCode.length !== 6) return toastError(t('error.roomCodeInvalid'));
         socket.emit('join-lobby', { username, roomCode, emoji: userEmoji });
     }
     playClick();
@@ -182,7 +200,7 @@ dom.menuActionBtn.onclick = () => {
 
 dom.spectatorBtn.onclick = () => {
     const roomCode = dom.roomCodeInput.value.trim().toUpperCase();
-    if (roomCode.length !== 6) return toastError('Bitte gib einen gültigen 6-stelligen Code ein.');
+    if (roomCode.length !== 6) return toastError(t('error.roomCodeInvalid'));
     socket.emit('join-spectator', { roomCode });
 };
 
@@ -232,8 +250,8 @@ if (dom.copyCodeBtn) {
         if (!state.roomCode) return;
         const ok = await copyToClipboard(state.roomCode);
         const { toastSuccess, toastError } = await import('./toast.js');
-        if (ok) toastSuccess(`Lobby-Code ${state.roomCode} kopiert.`);
-        else    toastError('Kopieren fehlgeschlagen. Bitte den Code manuell übernehmen.');
+        if (ok) toastSuccess(t('lobby.copyCode.success', { code: state.roomCode }));
+        else    toastError(t('lobby.copy.fail'));
     };
 }
 
@@ -246,8 +264,8 @@ if (dom.copyLinkBtn) {
         url.searchParams.set('room', state.roomCode);
         const ok = await copyToClipboard(url.toString());
         const { toastSuccess, toastError } = await import('./toast.js');
-        if (ok) toastSuccess('Einladungslink kopiert.');
-        else    toastError('Kopieren fehlgeschlagen.');
+        if (ok) toastSuccess(t('lobby.copyLink.success'));
+        else    toastError(t('lobby.copy.fail'));
     };
 }
 
@@ -265,7 +283,32 @@ if (dom.copyLinkBtn) {
     setTimeout(() => dom.username.focus(), 0);
 })();
 
+// ── Language toggle ─────────────────────────────────────────
+// Cycles through the supported locales on click. Full RTL or user-
+// facing locale selector UI is tracked in the improvement plan.
+const languageToggle = document.getElementById('language-toggle');
+if (languageToggle) {
+    languageToggle.addEventListener('click', () => {
+        const locales = getSupportedLocales();
+        const idx = locales.indexOf(getLocale());
+        const next = locales[(idx + 1) % locales.length];
+        setLocale(next);
+    });
+}
+
+// Re-render the pieces of UI that live inside JS strings (setTab,
+// non-host settings chips, start hint) whenever the locale changes.
+window.addEventListener('i18n:change', () => {
+    setTab(dom.tabCreate.classList.contains('active') ? 'create' : 'join');
+    if (state.roomCode && !state.isHost && state.settings) {
+        // Re-emit a dummy settings update — gatherSettings runs on the
+        // locally cached values so the chips pick up the new language.
+        document.dispatchEvent(new CustomEvent('icontale:rerender-settings'));
+    }
+});
+
 // ── Initialization ──────────────────────────────────────────
+await initI18n();
 initTheme();
 loadUserEmoji();
 loadSoundPreference();

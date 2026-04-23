@@ -10,6 +10,7 @@ import * as san from '../lib/sanitize';
 import * as filter from '../lib/wordfilter';
 import { processRoundResults, calculateTeamScores } from '../lib/scoring';
 import { getRandomEmojis } from '../lib/emoji-packs';
+import { registerCounter, renderMetrics, __reset as resetMetrics } from '../lib/metrics';
 
 function generateRoomCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -205,6 +206,21 @@ export function createTestServer(options = {}) {
     app.use(express.json({ limit: '1mb' }));
     app.get('/health', (_req, res) => {
         res.json({ status: 'ok', lobbies: Object.keys(lobbies).length });
+    });
+
+    // Register a minimal metric surface so /metrics integration tests
+    // see the same shape as the real server.
+    resetMetrics();
+    const testCounter = registerCounter(
+        'icontale_test_events_total',
+        'Test-only counter so /metrics has something to render'
+    );
+    testCounter.inc();
+
+    app.get('/metrics', async (_req, res) => {
+        const body = await renderMetrics();
+        res.setHeader('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+        res.send(body);
     });
 
     io.on('connection', (socket) => {

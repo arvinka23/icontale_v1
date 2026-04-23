@@ -5,6 +5,12 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 require('dotenv').config();
 
+// Sentry must initialise before any instrumentation hooks can be
+// registered (HTTP request capture, express middleware). Keep this
+// at the very top of the file.
+import * as sentry from './lib/sentry';
+sentry.initSentry({ version: process.env.npm_package_version });
+
 import crypto from 'crypto';
 import express from 'express';
 import http from 'http';
@@ -18,6 +24,8 @@ import * as san from './lib/sanitize';
 import * as filter from './lib/wordfilter';
 import { calculateTeamScores } from './lib/scoring';
 import * as store from './lib/store';
+import * as rateLimiter from './lib/socket-rate-limit';
+import { issueToken, verifyToken } from './lib/socket-auth';
 import { updateStatsAndCheck, ACHIEVEMENTS } from './lib/achievements';
 import { recordEvent, finalizeReplay, getReplay } from './lib/replay';
 import { getRandomEmojis } from './lib/emoji-packs';
@@ -34,7 +42,6 @@ import type {
     Lobby,
     Player,
     GameSettings,
-    RateLimitEntry,
     DisconnectedSession,
     Guess,
 } from './lib/types';
@@ -59,13 +66,28 @@ log.info({ NODE_ENV, PORT, origins: ALLOWED_ORIGINS }, 'Environment validated');
 const app = express();
 const server = http.createServer(app);
 
+// Trust the first proxy hop so req.ip, req.protocol and the
+// X-Forwarded-* headers reflect reality behind Render/Railway/
+// Heroku/Fly load balancers. Without this the HTTPS redirect
+// below and the express-rate-limit per-IP bucket both degrade:
+//   - Any client could spoof 'x-forwarded-proto: https' to
+//     bypass the redirect.
+//   - Every request would appear to come from the proxy's IP,
+//     so one abusive client could exhaust the rate-limit for
+//     everyone else.
+// '1' matches exactly one hop, which is correct for the usual
+// managed-PaaS deploys. Set TRUST_PROXY=loopback|uniquelocal|
+// ...or a number in the env to customise.
+const trustProxy = process.env.TRUST_PROXY ?? '1';
+app.set('trust proxy', /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy);
+
 // HTTPS redirect in production
 if (NODE_ENV === 'production') {
     app.use((req, res, next) => {
-        if (req.headers['x-forwarded-proto'] !== 'https') {
-            return res.redirect(301, `https://${req.hostname}${req.url}`);
+        if (req.secure || req.headers['x-forwarded-proto'] === 'https') {
+            return next();
         }
-        next();
+        return res.redirect(301, `https://${req.hostname}${req.url}`);
     });
 }
 
@@ -119,26 +141,151 @@ app.use(
     })
 );
 
-// Advertise the primary content language so browsers and crawlers can
-// pick the right hreflang / spell-checker / screen-reader locale.
-// Keep this in sync with <html lang> in public/index.html.
-app.use((_req, res, next) => {
-    res.setHeader('Content-Language', 'de');
+// Content-Language tracks the app's negotiated locale based on the
+// Accept-Language request header. We only advertise languages the
+// UI actually ships (de / en); unknown values fall back to the
+// default. Client-side code is still responsible for switching the
+// <html lang> attribute at runtime (see public/js/i18n.js), this
+// header just makes the initial HTML tell crawlers the truth.
+const SUPPORTED_LOCALES = ['de', 'en'];
+const DEFAULT_LOCALE = 'de';
+
+function negotiateLocale(acceptLanguage?: string): string {
+    if (!acceptLanguage) return DEFAULT_LOCALE;
+    const candidates = acceptLanguage
+        .split(',')
+        .map((part) => part.split(';')[0]!.trim().toLowerCase())
+        .filter(Boolean);
+
+    for (const candidate of candidates) {
+        const short = candidate.slice(0, 2);
+        if (SUPPORTED_LOCALES.includes(short)) return short;
+    }
+    return DEFAULT_LOCALE;
+}
+
+app.use((req, res, next) => {
+    const locale = negotiateLocale(req.headers['accept-language']);
+    res.setHeader('Content-Language', locale);
+    res.setHeader('Vary', 'Accept-Language');
     next();
 });
 
 app.use(express.static('public'));
 app.use(express.json({ limit: '1mb' }));
 
-// Health check
+// ── Metrics ─────────────────────────────────────────────────
+//
+// All counters live alongside the code that increments them, but
+// the gauges are defined once here so the /metrics endpoint always
+// exposes them even before the first event occurs.
+
+const metricSocketEvents = registerCounter(
+    'icontale_socket_events_total',
+    'Accepted Socket.io events by name',
+    ['event']
+);
+const metricSocketErrors = registerCounter(
+    'icontale_socket_errors_total',
+    'Socket.io events rejected by the middleware, by reason',
+    ['reason']
+);
+const metricLobbyEvents = registerCounter(
+    'icontale_lobby_events_total',
+    'Lobby lifecycle events',
+    ['type']
+);
+const metricStoriesSubmitted = registerCounter(
+    'icontale_stories_submitted_total',
+    'Stories successfully submitted by players'
+);
+const metricGuessesSubmitted = registerCounter(
+    'icontale_guesses_submitted_total',
+    'Guesses successfully submitted by players'
+);
+const metricConnectedSockets = registerGauge(
+    'icontale_connected_sockets',
+    'Sockets currently connected to this node'
+);
+
+// Snapshot gauges read from authoritative storage (Redis) at scrape
+// time so restarts cannot leave stale values behind.
+registerSnapshotGauge(
+    'icontale_lobbies_active',
+    'Active lobbies known to the store',
+    () => store.getLobbyCount()
+);
+registerSnapshotGauge(
+    'icontale_process_uptime_seconds',
+    'Process uptime in seconds',
+    () => process.uptime()
+);
+registerSnapshotGauge(
+    'icontale_heap_bytes',
+    'V8 heapUsed in bytes',
+    () => process.memoryUsage().heapUsed
+);
+
+// Health check.
+//
+// Returns a small JSON blob covering the liveness (process alive),
+// readiness (Redis reachable) and capacity (lobby count, heap) of
+// this node. Failures never throw — a /health that crashes is worse
+// than one returning degraded info. The response code reflects the
+// worst component:
+//    200 ok         everything healthy.
+//    503 degraded   Redis or store layer is unreachable.
 app.get('/health', async (_req, res) => {
-    const count = await store.getLobbyCount();
-    res.json({
+    const started = Date.now();
+    const mem = process.memoryUsage();
+    const status: {
+        status: 'ok' | 'degraded';
+        uptime: number;
+        timestamp: string;
+        version: string;
+        node: string;
+        lobbies: number | null;
+        redis: 'ok' | 'error' | 'unknown';
+        heap: { used: number; total: number };
+        checkMs: number;
+    } = {
         status: 'ok',
         uptime: process.uptime(),
-        lobbies: count,
         timestamp: new Date().toISOString(),
-    });
+        version: process.env.npm_package_version ?? 'unknown',
+        node: process.version,
+        lobbies: null,
+        redis: 'unknown',
+        heap: { used: mem.heapUsed, total: mem.heapTotal },
+        checkMs: 0,
+    };
+
+    try {
+        const count = await store.getLobbyCount();
+        status.lobbies = count;
+        status.redis = 'ok';
+    } catch (err) {
+        log.warn({ err }, 'health: store probe failed');
+        status.redis = 'error';
+        status.status = 'degraded';
+    }
+
+    status.checkMs = Date.now() - started;
+    res.status(status.status === 'ok' ? 200 : 503).json(status);
+});
+
+// Prometheus scrape endpoint. Intentionally NOT behind auth because
+// most scrape setups run inside the cluster; if you expose this
+// publicly, restrict it at the reverse proxy.
+app.get('/metrics', async (_req, res) => {
+    try {
+        const body = await renderMetrics();
+        res.setHeader('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+        res.send(body);
+    } catch (err) {
+        log.error({ err }, 'Failed to render metrics');
+        res.status(500).send('# metrics unavailable\n');
+    }
 });
 
 // Replay route
@@ -146,6 +293,16 @@ app.get('/replay/:id', async (req, res) => {
     const replay = await getReplay(req.params.id);
     if (!replay) return res.status(404).json({ error: 'Replay not found' });
     res.json(replay);
+});
+
+// Short-lived handshake token for Socket.io connections.
+// The HTTP layer already went through rate-limit + CORS + CSRF,
+// so issuing a token here is safe; the Socket.io middleware then
+// verifies that any connection holds a valid token before accepting
+// events. The TTL is intentionally short (2 min) so a leaked token
+// is useless almost immediately.
+app.get('/api/socket-token', (_req, res) => {
+    res.json({ token: issueToken() });
 });
 
 // ── Socket.io setup ─────────────────────────────────────────
@@ -165,38 +322,53 @@ const io = new Server(server, {
 });
 
 // Socket.io authentication middleware
+//
+// Two checks run for every incoming connection:
+//   1. Origin allow-list (unchanged).
+//   2. Short-lived handshake token obtained from GET /api/socket-token.
+//      When ENFORCE_SOCKET_AUTH is truthy, missing/invalid tokens are
+//      rejected outright. Otherwise the token is only logged — this
+//      lets operators observe rollout coverage before flipping the
+//      enforcement flag.
+const ENFORCE_SOCKET_AUTH =
+    process.env.ENFORCE_SOCKET_AUTH === '1' ||
+    process.env.ENFORCE_SOCKET_AUTH === 'true';
+
 io.use((socket, next) => {
     const origin = socket.handshake.headers.origin;
-    if (ALLOWED_ORIGINS.includes('*') || !origin || ALLOWED_ORIGINS.includes(origin)) {
-        return next();
+    const originOk =
+        ALLOWED_ORIGINS.includes('*') ||
+        !origin ||
+        ALLOWED_ORIGINS.includes(origin);
+
+    if (!originOk) {
+        log.warn({ origin, socketId: socket.id }, 'Rejected socket connection from disallowed origin');
+        return next(new Error('Origin not allowed'));
     }
-    log.warn({ origin, socketId: socket.id }, 'Rejected socket connection from disallowed origin');
-    return next(new Error('Origin not allowed'));
+
+    const token = socket.handshake.auth?.token;
+    const result = verifyToken(token);
+    if (!result.valid) {
+        log.warn(
+            { socketId: socket.id, origin, reason: result.reason, enforced: ENFORCE_SOCKET_AUTH },
+            'Socket handshake token invalid'
+        );
+        if (ENFORCE_SOCKET_AUTH) {
+            return next(new Error('Invalid handshake token'));
+        }
+    }
+
+    next();
 });
 
-// ── Socket rate limiting (per socket) ───────────────────────
+// ── Socket rate limiting ────────────────────────────────────
+// Per-event quotas (plus a global backstop) live in
+// ./lib/socket-rate-limit.ts. Buckets are swept periodically to
+// bound memory growth even when sockets churn.
 
-const socketRateLimits = new Map<string, RateLimitEntry>();
-const SOCKET_RATE_WINDOW = 10_000; // 10 seconds
-const SOCKET_RATE_MAX = 60; // max events per window
-
-function checkSocketRate(socketId: string): boolean {
-    const now = Date.now();
-    let entry = socketRateLimits.get(socketId);
-    if (!entry || now - entry.start > SOCKET_RATE_WINDOW) {
-        entry = { start: now, count: 0 };
-        socketRateLimits.set(socketId, entry);
-    }
-    entry.count++;
-    return entry.count <= SOCKET_RATE_MAX;
-}
-
-// Clean up stale rate-limit entries every minute
 setInterval(() => {
-    const now = Date.now();
-    for (const [id, entry] of socketRateLimits) {
-        if (now - entry.start > SOCKET_RATE_WINDOW * 2) socketRateLimits.delete(id);
-    }
+    const removed = rateLimiter.sweep();
+    if (removed > 0) log.debug({ removed }, 'Rate-limit bucket sweep');
 }, 60_000);
 
 // ── Default Settings ────────────────────────────────────────
@@ -264,6 +436,7 @@ setInterval(() => {
             clearLobbyTimers(lobby);
             delete lobbies[code];
             io.to(code).emit('lobby-closed', { reason: 'Inactivity timeout.' });
+            metricLobbyEvents.inc({ type: 'closed_inactive' });
             cleaned++;
         }
     }
@@ -303,11 +476,27 @@ const deps: GameFlowDeps = {
 
 io.on('connection', (socket: Socket) => {
     log.info({ socketId: socket.id }, 'Client connected');
+    metricConnectedSockets.inc();
 
-    socket.use(([event], next) => {
-        if (!checkSocketRate(socket.id)) {
-            log.warn({ socketId: socket.id, event }, 'Socket rate limited');
+    socket.use((packet, next) => {
+        const event = packet[0];
+        if (typeof event !== 'string') return next();
+
+        const args = packet.slice(1);
+        const bytes = rateLimiter.estimatePayloadBytes(args);
+        if (bytes > rateLimiter.MAX_PAYLOAD_BYTES) {
+            log.warn(
+                { socketId: socket.id, event, bytes, max: rateLimiter.MAX_PAYLOAD_BYTES },
+                'Socket payload too large — dropping'
+            );
+            return next(new Error('Payload too large'));
+        }
+
+        if (!rateLimiter.allowEvent(socket.id, event)) {
             return next(new Error('Rate limited'));
+        }
+        if (typeof event === 'string') {
+            metricSocketEvents.inc({ event });
         }
         next();
     });
@@ -491,6 +680,7 @@ io.on('connection', (socket: Socket) => {
                 players: lobbies[roomCode]!.players,
                 settings: merged,
             });
+            metricLobbyEvents.inc({ type: 'created' });
             io.to(roomCode).emit('players-update', lobbies[roomCode]!.players);
         } catch (err) {
             log.error({ err, socketId: socket.id }, 'Error in create-lobby');
@@ -556,6 +746,7 @@ io.on('connection', (socket: Socket) => {
                     players: lobby.players,
                     settings: lobby.settings,
                 });
+                metricLobbyEvents.inc({ type: 'joined' });
                 io.to(cResult.value).emit('players-update', lobby.players);
             } catch (err) {
                 log.error({ err, socketId: socket.id }, 'Error in join-lobby');
@@ -712,6 +903,7 @@ io.on('connection', (socket: Socket) => {
 
             lobby.stories[socket.id] = result.value;
             lobby.lastActivity = Date.now();
+            metricStoriesSubmitted.inc();
 
             // Achievement: track story stats (speed-demon, minimalist, novelist)
             const wordCount = result.value.split(/\s+/).filter(Boolean).length;
@@ -760,6 +952,7 @@ io.on('connection', (socket: Socket) => {
 
             lobby.guesses[socket.id] = { guess };
             lobby.lastActivity = Date.now();
+            metricGuessesSubmitted.inc();
 
             // Record replay event for guess
             recordEvent(lobby, 'guess-submit', { playerId: socket.id });
@@ -965,7 +1158,7 @@ io.on('connection', (socket: Socket) => {
 
     socket.on('disconnect', (reason: string) => {
         log.info({ socketId: socket.id, reason }, 'Client disconnected');
-        socketRateLimits.delete(socket.id);
+        rateLimiter.forgetSocket(socket.id);
 
         for (const code in lobbies) {
             const lobby = lobbies[code]!;
@@ -1145,11 +1338,13 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 process.on('uncaughtException', (err: Error) => {
     log.fatal({ err }, 'Uncaught exception');
+    sentry.captureException(err);
     gracefulShutdown('uncaughtException');
 });
 
 process.on('unhandledRejection', (reason: unknown) => {
     log.error({ reason }, 'Unhandled rejection');
+    sentry.captureException(reason);
 });
 
 // ── Start server ────────────────────────────────────────────
