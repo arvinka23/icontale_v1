@@ -19,6 +19,7 @@ import * as filter from './lib/wordfilter';
 import { calculateTeamScores } from './lib/scoring';
 import * as store from './lib/store';
 import * as rateLimiter from './lib/socket-rate-limit';
+import { issueToken, verifyToken } from './lib/socket-auth';
 import { updateStatsAndCheck, ACHIEVEMENTS } from './lib/achievements';
 import { recordEvent, finalizeReplay, getReplay } from './lib/replay';
 import { getRandomEmojis } from './lib/emoji-packs';
@@ -163,6 +164,16 @@ app.get('/replay/:id', async (req, res) => {
     res.json(replay);
 });
 
+// Short-lived handshake token for Socket.io connections.
+// The HTTP layer already went through rate-limit + CORS + CSRF,
+// so issuing a token here is safe; the Socket.io middleware then
+// verifies that any connection holds a valid token before accepting
+// events. The TTL is intentionally short (2 min) so a leaked token
+// is useless almost immediately.
+app.get('/api/socket-token', (_req, res) => {
+    res.json({ token: issueToken() });
+});
+
 // ── Socket.io setup ─────────────────────────────────────────
 
 const io = new Server(server, {
@@ -180,13 +191,43 @@ const io = new Server(server, {
 });
 
 // Socket.io authentication middleware
+//
+// Two checks run for every incoming connection:
+//   1. Origin allow-list (unchanged).
+//   2. Short-lived handshake token obtained from GET /api/socket-token.
+//      When ENFORCE_SOCKET_AUTH is truthy, missing/invalid tokens are
+//      rejected outright. Otherwise the token is only logged — this
+//      lets operators observe rollout coverage before flipping the
+//      enforcement flag.
+const ENFORCE_SOCKET_AUTH =
+    process.env.ENFORCE_SOCKET_AUTH === '1' ||
+    process.env.ENFORCE_SOCKET_AUTH === 'true';
+
 io.use((socket, next) => {
     const origin = socket.handshake.headers.origin;
-    if (ALLOWED_ORIGINS.includes('*') || !origin || ALLOWED_ORIGINS.includes(origin)) {
-        return next();
+    const originOk =
+        ALLOWED_ORIGINS.includes('*') ||
+        !origin ||
+        ALLOWED_ORIGINS.includes(origin);
+
+    if (!originOk) {
+        log.warn({ origin, socketId: socket.id }, 'Rejected socket connection from disallowed origin');
+        return next(new Error('Origin not allowed'));
     }
-    log.warn({ origin, socketId: socket.id }, 'Rejected socket connection from disallowed origin');
-    return next(new Error('Origin not allowed'));
+
+    const token = socket.handshake.auth?.token;
+    const result = verifyToken(token);
+    if (!result.valid) {
+        log.warn(
+            { socketId: socket.id, origin, reason: result.reason, enforced: ENFORCE_SOCKET_AUTH },
+            'Socket handshake token invalid'
+        );
+        if (ENFORCE_SOCKET_AUTH) {
+            return next(new Error('Invalid handshake token'));
+        }
+    }
+
+    next();
 });
 
 // ── Socket rate limiting ────────────────────────────────────
