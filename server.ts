@@ -119,11 +119,33 @@ app.use(
     })
 );
 
-// Advertise the primary content language so browsers and crawlers can
-// pick the right hreflang / spell-checker / screen-reader locale.
-// Keep this in sync with <html lang> in public/index.html.
-app.use((_req, res, next) => {
-    res.setHeader('Content-Language', 'de');
+// Content-Language tracks the app's negotiated locale based on the
+// Accept-Language request header. We only advertise languages the
+// UI actually ships (de / en); unknown values fall back to the
+// default. Client-side code is still responsible for switching the
+// <html lang> attribute at runtime (see public/js/i18n.js), this
+// header just makes the initial HTML tell crawlers the truth.
+const SUPPORTED_LOCALES = ['de', 'en'];
+const DEFAULT_LOCALE = 'de';
+
+function negotiateLocale(acceptLanguage?: string): string {
+    if (!acceptLanguage) return DEFAULT_LOCALE;
+    const candidates = acceptLanguage
+        .split(',')
+        .map((part) => part.split(';')[0]!.trim().toLowerCase())
+        .filter(Boolean);
+
+    for (const candidate of candidates) {
+        const short = candidate.slice(0, 2);
+        if (SUPPORTED_LOCALES.includes(short)) return short;
+    }
+    return DEFAULT_LOCALE;
+}
+
+app.use((req, res, next) => {
+    const locale = negotiateLocale(req.headers['accept-language']);
+    res.setHeader('Content-Language', locale);
+    res.setHeader('Vary', 'Accept-Language');
     next();
 });
 
