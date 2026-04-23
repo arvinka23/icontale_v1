@@ -700,10 +700,10 @@ textarea {
 .timer-bar-inner {
     width: 100%;
     background: var(--primary);
-    height: 100%;
+    height: var(--timer-pct, 100%);
     border-radius: var(--radius-lg);
-    transition: height 1s linear;
-    will-change: height;
+    transition: height 1s linear, width 1s linear;
+    will-change: height, width;
 }
 
 .writing-main {

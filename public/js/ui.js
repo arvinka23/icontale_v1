@@ -310,7 +310,11 @@ export function showWritingPhase(emojis, writingStartTime, settings, round, tota
 function updateWritingTimer(total) {
     dom.writingTimerTime.textContent = formatTime(state.writingTimeLeft);
     const pct = Math.max(0, state.writingTimeLeft / total);
-    dom.writingTimerBar.style.height = `${pct * 100}%`;
+    // Use a CSS custom property so the same JS works for both axes:
+    // desktop animates height (vertical bar), mobile animates width
+    // (horizontal bar). See .timer-bar-inner rules in styles.css.
+    const pctCss = `${pct * 100}%`;
+    dom.writingTimerBar.style.setProperty('--timer-pct', pctCss);
     dom.writingTimerTime.classList.toggle('timer-urgent', state.writingTimeLeft <= 30);
 
     const bar = dom.writingTimerBar?.parentElement;
