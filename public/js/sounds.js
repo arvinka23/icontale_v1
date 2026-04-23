@@ -10,7 +10,11 @@ let ctx = null;
 function getCtx() {
     if (!ctx) {
         try {
-            ctx = new (window.AudioContext || window.webkitAudioContext)();
+            // webkitAudioContext keeps older Safari working; declared
+            // any-typed to side-step the missing lib DOM definition.
+            const Ctor = window.AudioContext
+                || /** @type {any} */ (window).webkitAudioContext;
+            ctx = new Ctor();
         } catch {
             return null;
         }
