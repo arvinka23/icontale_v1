@@ -15,12 +15,19 @@ import { openReplay } from './replay.js';
 import { initTheme } from './theme.js';
 
 // ── Socket.io (loaded globally via <script> tag) ────────────
-const socket = window.io({
-    reconnection: true,
-    reconnectionAttempts: 10,
-    reconnectionDelay: 1000,
-    reconnectionDelayMax: 5000,
-});
+// socket.io.js exposes a global `io(opts)` factory on window. We
+// narrow it to the surface public/js actually uses so the checker
+// can verify every emit/on call.
+const socket = /** @type {import('./types').ClientSocket} */ (
+    /** @type {(opts?: object) => unknown} */ (
+        /** @type {any} */ (window).io
+    )({
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+    })
+);
 
 // Register all socket event handlers
 registerSocketHandlers(socket);
@@ -75,7 +82,7 @@ export function restoreDraftIfAny() {
         const saved = sessionStorage.getItem(key);
         if (saved && !dom.writingStory.value) {
             dom.writingStory.value = saved;
-            dom.wordCount.textContent = countWords(saved);
+            dom.wordCount.textContent = String(countWords(saved));
         }
     } catch { /* ignore */ }
 }
@@ -98,8 +105,8 @@ function scheduleDraftSave() {
 // Word count (writing phase) + debounced draft autosave
 dom.writingStory.addEventListener('input', () => {
     const words = countWords(dom.writingStory.value);
-    dom.wordCount.textContent = words;
-    const limit = parseInt(dom.wordLimit.textContent) || 500;
+    dom.wordCount.textContent = String(words);
+    const limit = parseInt(dom.wordLimit.textContent ?? '500') || 500;
     dom.wordCount.classList.toggle('over-limit', words > limit);
     scheduleDraftSave();
 });
@@ -150,7 +157,8 @@ dom.gameoverNewGameBtn.onclick = () => {
 
 // Replay viewer (if replay button exists in game-over screen)
 document.addEventListener('click', (e) => {
-    if (e.target.closest('#replay-btn') && state.lastReplayId) {
+    const target = /** @type {HTMLElement | null} */ (e.target);
+    if (target && target.closest('#replay-btn') && state.lastReplayId) {
         openReplay(state.lastReplayId);
     }
 });

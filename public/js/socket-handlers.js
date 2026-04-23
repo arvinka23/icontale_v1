@@ -17,7 +17,12 @@ const CONNECTION_TIMEOUT = 15_000; // 15s
 
 /**
  * Register all socket event handlers.
- * @param {import('socket.io-client').Socket} socket
+ *
+ * Uses the local ClientSocket alias (public/js/types.d.ts) instead
+ * of the socket.io-client Socket type so checkJs doesn't need
+ * socket.io-client in node_modules just to typecheck the frontend.
+ *
+ * @param {import('./types').ClientSocket} socket
  */
 export function registerSocketHandlers(socket) {
 
@@ -176,8 +181,8 @@ export function registerSocketHandlers(socket) {
     });
 
     socket.on('writing-progress', ({ submitted, total }) => {
-        dom.storiesSubmitted.textContent = submitted;
-        dom.storiesTotal.textContent = total;
+        dom.storiesSubmitted.textContent = String(submitted);
+        dom.storiesTotal.textContent = String(total);
     });
 
     socket.on('guess-phase', (data) => {

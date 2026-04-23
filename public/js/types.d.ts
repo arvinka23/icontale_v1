@@ -24,16 +24,23 @@ export {
     ReplayEventType,
 } from '../../lib/types';
 
-/** A subset of the Socket.io client typings we actually use. */
+/**
+ * A subset of the Socket.io client typings we actually use. Handler
+ * arguments are deliberately typed as `any` so downstream JSDoc in
+ * the handler body (`@param {{ roomCode: string }}`) drives the shape
+ * without cluttering every call site with casts.
+ */
 export interface ClientSocket {
     id?: string;
     connected: boolean;
-    on(event: string, handler: (...args: unknown[]) => void): void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    on(event: string, handler: (...args: any[]) => void): void;
     emit(event: string, ...args: unknown[]): void;
     connect(): void;
     disconnect(): void;
     io: {
-        on(event: string, handler: (...args: unknown[]) => void): void;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        on(event: string, handler: (...args: any[]) => void): void;
     };
 }
 
