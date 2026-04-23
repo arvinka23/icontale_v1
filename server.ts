@@ -18,6 +18,12 @@ import * as san from './lib/sanitize';
 import * as filter from './lib/wordfilter';
 import { calculateTeamScores } from './lib/scoring';
 import * as store from './lib/store';
+import {
+    registerCounter,
+    registerGauge,
+    registerSnapshotGauge,
+    renderMetrics,
+} from './lib/metrics';
 import { updateStatsAndCheck, ACHIEVEMENTS } from './lib/achievements';
 import { recordEvent, finalizeReplay, getReplay } from './lib/replay';
 import { getRandomEmojis } from './lib/emoji-packs';
@@ -130,6 +136,58 @@ app.use((_req, res, next) => {
 app.use(express.static('public'));
 app.use(express.json({ limit: '1mb' }));
 
+// ── Metrics ─────────────────────────────────────────────────
+//
+// All counters live alongside the code that increments them, but
+// the gauges are defined once here so the /metrics endpoint always
+// exposes them even before the first event occurs.
+
+const metricSocketEvents = registerCounter(
+    'icontale_socket_events_total',
+    'Accepted Socket.io events by name',
+    ['event']
+);
+const metricSocketErrors = registerCounter(
+    'icontale_socket_errors_total',
+    'Socket.io events rejected by the middleware, by reason',
+    ['reason']
+);
+const metricLobbyEvents = registerCounter(
+    'icontale_lobby_events_total',
+    'Lobby lifecycle events',
+    ['type']
+);
+const metricStoriesSubmitted = registerCounter(
+    'icontale_stories_submitted_total',
+    'Stories successfully submitted by players'
+);
+const metricGuessesSubmitted = registerCounter(
+    'icontale_guesses_submitted_total',
+    'Guesses successfully submitted by players'
+);
+const metricConnectedSockets = registerGauge(
+    'icontale_connected_sockets',
+    'Sockets currently connected to this node'
+);
+
+// Snapshot gauges read from authoritative storage (Redis) at scrape
+// time so restarts cannot leave stale values behind.
+registerSnapshotGauge(
+    'icontale_lobbies_active',
+    'Active lobbies known to the store',
+    () => store.getLobbyCount()
+);
+registerSnapshotGauge(
+    'icontale_process_uptime_seconds',
+    'Process uptime in seconds',
+    () => process.uptime()
+);
+registerSnapshotGauge(
+    'icontale_heap_bytes',
+    'V8 heapUsed in bytes',
+    () => process.memoryUsage().heapUsed
+);
+
 // Health check
 app.get('/health', async (_req, res) => {
     const count = await store.getLobbyCount();
@@ -139,6 +197,20 @@ app.get('/health', async (_req, res) => {
         lobbies: count,
         timestamp: new Date().toISOString(),
     });
+});
+
+// Prometheus scrape endpoint. Intentionally NOT behind auth because
+// most scrape setups run inside the cluster; if you expose this
+// publicly, restrict it at the reverse proxy.
+app.get('/metrics', async (_req, res) => {
+    try {
+        const body = await renderMetrics();
+        res.setHeader('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+        res.send(body);
+    } catch (err) {
+        log.error({ err }, 'Failed to render metrics');
+        res.status(500).send('# metrics unavailable\n');
+    }
 });
 
 // Replay route
@@ -264,6 +336,7 @@ setInterval(() => {
             clearLobbyTimers(lobby);
             delete lobbies[code];
             io.to(code).emit('lobby-closed', { reason: 'Inactivity timeout.' });
+            metricLobbyEvents.inc({ type: 'closed_inactive' });
             cleaned++;
         }
     }
@@ -303,11 +376,16 @@ const deps: GameFlowDeps = {
 
 io.on('connection', (socket: Socket) => {
     log.info({ socketId: socket.id }, 'Client connected');
+    metricConnectedSockets.inc();
 
     socket.use(([event], next) => {
         if (!checkSocketRate(socket.id)) {
             log.warn({ socketId: socket.id, event }, 'Socket rate limited');
+            metricSocketErrors.inc({ reason: 'rate_limited' });
             return next(new Error('Rate limited'));
+        }
+        if (typeof event === 'string') {
+            metricSocketEvents.inc({ event });
         }
         next();
     });
@@ -491,6 +569,7 @@ io.on('connection', (socket: Socket) => {
                 players: lobbies[roomCode]!.players,
                 settings: merged,
             });
+            metricLobbyEvents.inc({ type: 'created' });
             io.to(roomCode).emit('players-update', lobbies[roomCode]!.players);
         } catch (err) {
             log.error({ err, socketId: socket.id }, 'Error in create-lobby');
@@ -556,6 +635,7 @@ io.on('connection', (socket: Socket) => {
                     players: lobby.players,
                     settings: lobby.settings,
                 });
+                metricLobbyEvents.inc({ type: 'joined' });
                 io.to(cResult.value).emit('players-update', lobby.players);
             } catch (err) {
                 log.error({ err, socketId: socket.id }, 'Error in join-lobby');
@@ -712,6 +792,7 @@ io.on('connection', (socket: Socket) => {
 
             lobby.stories[socket.id] = result.value;
             lobby.lastActivity = Date.now();
+            metricStoriesSubmitted.inc();
 
             // Achievement: track story stats (speed-demon, minimalist, novelist)
             const wordCount = result.value.split(/\s+/).filter(Boolean).length;
@@ -760,6 +841,7 @@ io.on('connection', (socket: Socket) => {
 
             lobby.guesses[socket.id] = { guess };
             lobby.lastActivity = Date.now();
+            metricGuessesSubmitted.inc();
 
             // Record replay event for guess
             recordEvent(lobby, 'guess-submit', { playerId: socket.id });
@@ -966,6 +1048,7 @@ io.on('connection', (socket: Socket) => {
     socket.on('disconnect', (reason: string) => {
         log.info({ socketId: socket.id, reason }, 'Client disconnected');
         socketRateLimits.delete(socket.id);
+        metricConnectedSockets.dec();
 
         for (const code in lobbies) {
             const lobby = lobbies[code]!;
