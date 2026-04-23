@@ -188,15 +188,52 @@ registerSnapshotGauge(
     () => process.memoryUsage().heapUsed
 );
 
-// Health check
+// Health check.
+//
+// Returns a small JSON blob covering the liveness (process alive),
+// readiness (Redis reachable) and capacity (lobby count, heap) of
+// this node. Failures never throw — a /health that crashes is worse
+// than one returning degraded info. The response code reflects the
+// worst component:
+//    200 ok         everything healthy.
+//    503 degraded   Redis or store layer is unreachable.
 app.get('/health', async (_req, res) => {
-    const count = await store.getLobbyCount();
-    res.json({
+    const started = Date.now();
+    const mem = process.memoryUsage();
+    const status: {
+        status: 'ok' | 'degraded';
+        uptime: number;
+        timestamp: string;
+        version: string;
+        node: string;
+        lobbies: number | null;
+        redis: 'ok' | 'error' | 'unknown';
+        heap: { used: number; total: number };
+        checkMs: number;
+    } = {
         status: 'ok',
         uptime: process.uptime(),
-        lobbies: count,
         timestamp: new Date().toISOString(),
-    });
+        version: process.env.npm_package_version ?? 'unknown',
+        node: process.version,
+        lobbies: null,
+        redis: 'unknown',
+        heap: { used: mem.heapUsed, total: mem.heapTotal },
+        checkMs: 0,
+    };
+
+    try {
+        const count = await store.getLobbyCount();
+        status.lobbies = count;
+        status.redis = 'ok';
+    } catch (err) {
+        log.warn({ err }, 'health: store probe failed');
+        status.redis = 'error';
+        status.status = 'degraded';
+    }
+
+    status.checkMs = Date.now() - started;
+    res.status(status.status === 'ok' ? 200 : 503).json(status);
 });
 
 // Prometheus scrape endpoint. Intentionally NOT behind auth because
