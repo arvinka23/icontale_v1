@@ -72,6 +72,8 @@ export function setTab(tab) {
         if (menuHint) menuHint.textContent = t('menu.hint.create');
         dom.tabCreate.setAttribute('aria-selected', 'true');
         dom.tabJoin.setAttribute('aria-selected', 'false');
+        dom.tabCreate.setAttribute('tabindex', '0');
+        dom.tabJoin.setAttribute('tabindex', '-1');
     } else {
         dom.tabCreate.classList.remove('active');
         dom.tabJoin.classList.add('active');
@@ -81,6 +83,8 @@ export function setTab(tab) {
         if (menuHint) menuHint.textContent = t('menu.hint.join');
         dom.tabCreate.setAttribute('aria-selected', 'false');
         dom.tabJoin.setAttribute('aria-selected', 'true');
+        dom.tabCreate.setAttribute('tabindex', '-1');
+        dom.tabJoin.setAttribute('tabindex', '0');
     }
 }
 
