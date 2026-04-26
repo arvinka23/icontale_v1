@@ -24,6 +24,9 @@
   "menu.quickstart.step3": "Write, guess, and climb the leaderboard.",
   "menu.hint.create": "You are the host: share the code with your friends next.",
   "menu.hint.join": "Enter a code to jump straight into an active lobby.",
+  "menu.feedback.nameRequired": "Enter your name first, then create or join a lobby.",
+  "menu.feedback.roomCodeHint": "Room codes have exactly 6 letters/numbers.",
+  "menu.feedback.roomCodeProgress": "{remaining} more characters until the lobby code is valid.",
 
   "lobby.title": "Lobby",
   "lobby.waiting": "Waiting for players…",
@@ -109,6 +112,12 @@
   "info.playerReconnected": "{name} is back.",
   "info.serverShutdown": "Server restarting…",
   "info.lobbyClosed": "Lobby was closed.",
+  "connection.banner.reconnecting": "Connection lost. Trying to reconnect you automatically…",
+  "connection.banner.reconnected": "Connection restored. You can continue playing.",
+  "connection.banner.waitingPhase": "Reconnect successful. Waiting for the next phase.",
+  "connection.banner.reconnectFailed": "Reconnect failed. Please reload and rejoin the lobby.",
+  "connection.banner.serverDisconnect": "The server closed the connection. Please reload the page.",
+  "connection.banner.serverUnreachable": "Server unreachable right now. Check your connection and try again.",
 
   "theme.toggle": "Toggle theme",
   "theme.auto": "Theme: automatic ({resolved})",
