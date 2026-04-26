@@ -56,12 +56,40 @@ import type {
 
 const PORT = parseInt(process.env.PORT ?? '3000', 10) || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',').map((s) => s.trim())
-    : ['*'];
+const allowWildcardOrigin = process.env.ALLOW_WILDCARD_ORIGIN === 'true';
+const configuredOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+    : [];
+const ALLOWED_ORIGINS =
+    configuredOrigins.length > 0
+        ? configuredOrigins
+        : NODE_ENV === 'production' && !allowWildcardOrigin
+          ? []
+          : ['*'];
 
 if (isNaN(PORT) || PORT < 1 || PORT > 65535) {
     log.fatal({ port: process.env.PORT }, 'Invalid PORT — must be 1-65535');
+    process.exit(1);
+}
+
+if (NODE_ENV === 'production' && ALLOWED_ORIGINS.length === 0) {
+    log.fatal(
+        'ALLOWED_ORIGINS must be set in production (comma-separated absolute origins).'
+    );
+    process.exit(1);
+}
+
+if (
+    NODE_ENV === 'production' &&
+    ALLOWED_ORIGINS.includes('*') &&
+    !allowWildcardOrigin
+) {
+    log.fatal(
+        'Wildcard ALLOWED_ORIGINS is blocked in production. Set explicit origins or ALLOW_WILDCARD_ORIGIN=true.'
+    );
     process.exit(1);
 }
 
@@ -101,7 +129,7 @@ if (NODE_ENV === 'production') {
 app.use(
     cors({
         origin: ALLOWED_ORIGINS.includes('*') ? true : ALLOWED_ORIGINS,
-        methods: ['GET'],
+        methods: ['GET', 'POST', 'OPTIONS'],
         credentials: true,
     })
 );
@@ -141,8 +169,9 @@ app.use(
     rateLimit({
         windowMs: 15 * 60 * 1000, // 15 min
         max: 200, // per IP
-        standardHeaders: true,
+        standardHeaders: 'draft-8',
         legacyHeaders: false,
+        ipv6Subnet: 56,
         message: { error: 'Zu viele Anfragen. Bitte später erneut versuchen.' },
     })
 );
