@@ -84,7 +84,6 @@ class MemoryStore {
     }
 
     pipeline() {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
         const self = this;
         const ops: Array<() => void> = [];
         const builder = {
@@ -112,14 +111,12 @@ class MemoryStore {
 
 let memStore: MemoryStore | null = null;
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 type RedisType = import('ioredis').default;
 let redisInstance: RedisType | null = null;
 
 function initStore(): void {
     if (USE_REDIS) {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const Redis = require('ioredis') as new (url: string) => RedisType;
+        const Redis = require('ioredis') as new (_url: string) => RedisType;
         redisInstance = new Redis(REDIS_URL!);
         redisInstance.on('connect', () => log.info('Redis connected'));
         redisInstance.on('error', (err: Error) => log.error({ err }, 'Redis error'));
@@ -133,7 +130,6 @@ function initStore(): void {
 initStore();
 
 // Helper to get the active backend
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function store(): any {
     return redisInstance || memStore!;
 }
@@ -153,6 +149,7 @@ const KEY = {
 
 function serializeLobby(lobby: Lobby): string {
     const { writingTimeout, ...rest } = lobby;
+    void writingTimeout;
     return JSON.stringify(rest);
 }
 

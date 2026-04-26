@@ -12,10 +12,10 @@
 import log from './logger';
 
 export interface SentryLike {
-    init: (opts: Record<string, unknown>) => void;
-    captureException: (err: unknown, context?: unknown) => void;
-    captureMessage: (msg: string, level?: string) => void;
-    setupExpressErrorHandler?: (app: unknown) => void;
+    init: (_opts: Record<string, unknown>) => void;
+    captureException: (_err: unknown, _context?: unknown) => void;
+    captureMessage: (_msg: string, _level?: string) => void;
+    setupExpressErrorHandler?: (_app: unknown) => void;
 }
 
 let sentry: SentryLike | null = null;
@@ -38,7 +38,6 @@ export function initSentry(extra?: { version?: string }): void {
     try {
         // Using require here so bundlers do not resolve Sentry into
         // the dependency graph unless the runtime branch is taken.
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const Sentry = require('@sentry/node') as SentryLike;
 
         Sentry.init({
