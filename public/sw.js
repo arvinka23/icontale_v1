@@ -14,6 +14,7 @@ const CACHE_NAME = `icontale-${VERSION === '__ICONTALE_VERSION__' ? 'dev' : VERS
 const SHELL_ASSETS = [
     '/',
     '/index.html',
+    '/styles.min.css',
     '/styles.css',
     '/js/main.js',
     '/js/constants.js',
