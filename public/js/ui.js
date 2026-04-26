@@ -62,12 +62,14 @@ export function randomizeEmoji() {
 // ── Tab Switching ───────────────────────────────────────────
 
 export function setTab(tab) {
+    const menuHint = /** @type {HTMLElement | null} */ (document.getElementById('menu-context-hint'));
     if (tab === 'create') {
         dom.tabCreate.classList.add('active');
         dom.tabJoin.classList.remove('active');
         dom.roomCodeGroup.classList.add('hidden');
         dom.spectatorBtn.classList.add('hidden');
         dom.menuActionBtn.innerHTML = `<span class="btn-icon">🚀</span> ${t('menu.action.create')}`;
+        if (menuHint) menuHint.textContent = t('menu.hint.create');
         dom.tabCreate.setAttribute('aria-selected', 'true');
         dom.tabJoin.setAttribute('aria-selected', 'false');
     } else {
@@ -76,6 +78,7 @@ export function setTab(tab) {
         dom.roomCodeGroup.classList.remove('hidden');
         dom.spectatorBtn.classList.remove('hidden');
         dom.menuActionBtn.innerHTML = `<span class="btn-icon">🎯</span> ${t('menu.action.join')}`;
+        if (menuHint) menuHint.textContent = t('menu.hint.join');
         dom.tabCreate.setAttribute('aria-selected', 'false');
         dom.tabJoin.setAttribute('aria-selected', 'true');
     }
@@ -220,11 +223,13 @@ export function showLobby(roomCode, players, settings) {
     dom.lobby.classList.remove('hidden');
     dom.roomCode.textContent = roomCode;
     state.settings = settings || {};
+    const lobbyNextStep = /** @type {HTMLElement | null} */ (document.getElementById('lobby-next-step'));
 
     if (state.isHost) {
         dom.settingsPanel.classList.remove('hidden');
         dom.settingsDisplay.classList.add('hidden');
         dom.startGame.classList.remove('hidden');
+        if (lobbyNextStep) lobbyNextStep.textContent = t('lobby.next.host');
         setSettingActive('mode-options', settings.gameMode);
         setSettingActive('timer-options', String(settings.timerDuration));
         setSettingActive('wordlimit-options', String(settings.wordLimit));
@@ -234,6 +239,7 @@ export function showLobby(roomCode, players, settings) {
     } else {
         dom.settingsPanel.classList.add('hidden');
         dom.startGame.classList.add('hidden');
+        if (lobbyNextStep) lobbyNextStep.textContent = t('lobby.next.player');
         renderSettingsDisplay(settings);
     }
 
