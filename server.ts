@@ -16,6 +16,7 @@ import express from 'express';
 import http from 'http';
 import helmet from 'helmet';
 import cors from 'cors';
+import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { Server, Socket } from 'socket.io';
 
@@ -206,6 +207,11 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use(
+    compression({
+        threshold: 1024,
+    })
+);
 app.use(express.static('public'));
 app.use(express.json({ limit: '1mb' }));
 

@@ -2,7 +2,7 @@ services:
   - type: web
     name: icontale-game
     env: node
-    buildCommand: npm install
+    buildCommand: npm ci && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV

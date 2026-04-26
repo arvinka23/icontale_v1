@@ -9,9 +9,8 @@ import {
     loadUserEmoji, randomizeEmoji, setTab, initSettingsUI,
     gatherSettings, showTutorial, hideTutorial,
 } from './ui.js';
-import { loadSoundPreference, toggleSound, playClick } from './sounds.js';
+import { loadSoundPreference, playClick } from './sounds.js';
 import { registerSocketHandlers } from './socket-handlers.js';
-import { openReplay } from './replay.js';
 import { initTheme } from './theme.js';
 import { initI18n, t, setLocale, getLocale, getSupportedLocales } from './i18n.js';
 
@@ -46,9 +45,6 @@ const socket = window.io({
 
 // Register all socket event handlers
 registerSocketHandlers(socket);
-
-// Now that handlers are wired, kick off the connect.
-socket.connect();
 
 // ── Settings Emit ───────────────────────────────────────────
 function emitSettings() {
@@ -177,7 +173,9 @@ dom.gameoverNewGameBtn.onclick = () => {
 document.addEventListener('click', (e) => {
     const target = /** @type {HTMLElement | null} */ (e.target);
     if (target && target.closest('#replay-btn') && state.lastReplayId) {
-        openReplay(state.lastReplayId);
+        import('./replay.js').then(({ openReplay }) => {
+            openReplay(state.lastReplayId);
+        });
     }
 });
 
@@ -319,6 +317,9 @@ loadUserEmoji();
 loadSoundPreference();
 setTab('create');
 initSettingsUI(emitSettings);
+
+// Defer websocket handshake until initial UI is painted.
+requestAnimationFrame(() => socket.connect());
 
 // Show tutorial on first visit
 const hasTutorialSeen = !!localStorage.getItem('icontale_tutorial_seen');

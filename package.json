@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/server.js",
     "start:dev": "tsx server.ts",
-    "build": "tsc",
+    "build": "npm run build:css && tsc",
     "typecheck:client": "tsc -p tsconfig.client.json --noEmit",
     "dev": "tsx watch server.ts",
     "test": "vitest run",
@@ -40,6 +40,7 @@
   "homepage": "https://arvinka23.github.io/icontale",
   "dependencies": {
     "@sentry/node": "^10.50.0",
+    "compression": "^1.8.1",
     "cors": "^2.8.6",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
@@ -52,6 +53,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/ioredis": "^4.28.10",
@@ -77,6 +79,6 @@
     "vitest": "^3.0.5"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": "22.x"
   }
 }
