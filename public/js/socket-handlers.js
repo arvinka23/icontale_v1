@@ -2,9 +2,10 @@
 //  Socket Event Handlers + Connection Management
 // ═══════════════════════════════════════════════════════════════
 
-import { state, Phase, resetGameState, saveSession, clearSession, getStoredSession, forcePhase } from './state.js';
+import { state, Phase, resetGameState, saveSession, clearSession, getStoredSession } from './state.js';
 import { dom } from './dom.js';
 import { toastInfo, toastSuccess, toastError } from './toast.js';
+import { t } from './i18n.js';
 import {
     showLobby, updatePlayersList, updateSettingsDisplay, updateSpectatorCount,
     showWritingPhase, showGuessPhase, showResultsPhase, advanceResults,
@@ -14,6 +15,19 @@ import { playError } from './sounds.js';
 
 // Connection health
 const CONNECTION_TIMEOUT = 15_000; // 15s
+
+function setConnectionStatus(message = '', level = 'warning') {
+    if (!dom.connectionStatus) return;
+    if (!message) {
+        dom.connectionStatus.textContent = '';
+        dom.connectionStatus.dataset.state = '';
+        dom.connectionStatus.classList.add('hidden');
+        return;
+    }
+    dom.connectionStatus.textContent = message;
+    dom.connectionStatus.dataset.state = level;
+    dom.connectionStatus.classList.remove('hidden');
+}
 
 /**
  * Register all socket event handlers.
@@ -30,6 +44,7 @@ export function registerSocketHandlers(socket) {
 
     socket.on('connect', () => {
         console.info('[socket] Connected:', socket.id);
+        setConnectionStatus('');
         // Attempt reconnect if we have a stored session
         const session = getStoredSession();
         if (session) {
@@ -40,27 +55,36 @@ export function registerSocketHandlers(socket) {
     socket.on('disconnect', (reason) => {
         console.warn('[socket] Disconnected:', reason);
         if (reason === 'io server disconnect') {
-            toastError('Verbindung vom Server getrennt.');
+            const msg = t('error.disconnectedByServer');
+            toastError(msg);
+            setConnectionStatus(t('connection.banner.serverDisconnect'), 'error');
         } else if (state.phase !== Phase.MENU) {
-            toastInfo('Verbindung verloren — versuche neu zu verbinden…');
+            const msg = t('error.connectionLost');
+            toastInfo(msg);
+            setConnectionStatus(t('connection.banner.reconnecting'), 'warning');
         }
     });
 
     socket.on('connect_error', (err) => {
         console.error('[socket] Connection error:', err.message);
         if (state.phase === Phase.MENU) {
-            toastError('Server nicht erreichbar. Bitte später versuchen.');
+            const msg = t('error.serverUnreachable');
+            toastError(msg);
+            setConnectionStatus(t('connection.banner.serverUnreachable'), 'warning');
         }
     });
 
     socket.io.on('reconnect', (attempt) => {
         console.info('[socket] Reconnected after', attempt, 'attempts');
-        toastSuccess('Verbindung wiederhergestellt.');
+        toastSuccess(t('info.reconnected'));
+        setConnectionStatus(t('connection.banner.reconnected'), 'success');
     });
 
     socket.io.on('reconnect_failed', () => {
         console.error('[socket] Reconnect failed permanently');
-        toastError('Verbindung fehlgeschlagen. Bitte Seite neu laden.');
+        const msg = t('error.reconnectFailed');
+        toastError(msg);
+        setConnectionStatus(t('connection.banner.reconnectFailed'), 'error');
         playError();
     });
 
@@ -74,7 +98,10 @@ export function registerSocketHandlers(socket) {
         saveSession(roomCode);
         showLobby(roomCode, players, settings);
         if (started && gamePhase !== 'lobby') {
-            toastInfo('Verbindung wiederhergestellt. Warte auf die nächste Phase…');
+            toastInfo(t('info.reconnectedWaitingPhase'));
+            setConnectionStatus(t('connection.banner.waitingPhase'), 'success');
+        } else {
+            setConnectionStatus('');
         }
     });
 
@@ -91,6 +118,7 @@ export function registerSocketHandlers(socket) {
         state.settings = settings;
         saveSession(roomCode);
         showLobby(roomCode, players, settings);
+        setConnectionStatus('');
     });
 
     socket.on('lobby-joined', ({ roomCode, players, settings }) => {
@@ -100,6 +128,7 @@ export function registerSocketHandlers(socket) {
         state.settings = settings;
         saveSession(roomCode);
         showLobby(roomCode, players, settings);
+        setConnectionStatus('');
     });
 
     socket.on('players-update', (players) => {
@@ -144,7 +173,7 @@ export function registerSocketHandlers(socket) {
 
     // ── Spectator Events ────────────────────────────────────
 
-    socket.on('spectator-joined', ({ roomCode, players, settings, started, currentRound, totalRounds }) => {
+    socket.on('spectator-joined', ({ roomCode, settings, started, currentRound, totalRounds }) => {
         state.isSpectator = true;
         state.roomCode = roomCode;
         state.settings = settings;
@@ -194,7 +223,7 @@ export function registerSocketHandlers(socket) {
         showGuessPhase(data, socket);
     });
 
-    socket.on('guessing-progress', ({ submitted, total }) => {
+    socket.on('guessing-progress', ({ _submitted, _total }) => {
         // Could show a progress indicator
     });
 
@@ -270,7 +299,7 @@ export function registerSocketHandlers(socket) {
  * @param {object} data
  * @param {number} timeout
  */
-export function emitWithTimeout(socket, event, data, timeout = CONNECTION_TIMEOUT) {
+export function emitWithTimeout(socket, event, data, _timeout = CONNECTION_TIMEOUT) {
     socket.emit(event, data);
     // For critical actions, we could add acknowledgment callbacks here
 }
