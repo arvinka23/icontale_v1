@@ -6,6 +6,7 @@
   },
   "app.title": "IconTale – Creative Storytelling Game",
   "app.subtitle": "Creative stories with emojis!",
+  "app.lead": "Get started in 3 steps: write, guess, and score points.",
 
   "menu.tab.create": "Create lobby",
   "menu.tab.join": "Join lobby",
@@ -17,6 +18,12 @@
   "menu.action.join": "Join lobby",
   "menu.action.spectate": "Join as spectator",
   "menu.emoji.change": "Change emoji",
+  "menu.quickstart.title": "Quick start",
+  "menu.quickstart.step1": "Enter your name and pick an emoji.",
+  "menu.quickstart.step2": "Create a lobby or join with a code.",
+  "menu.quickstart.step3": "Write, guess, and climb the leaderboard.",
+  "menu.hint.create": "You are the host: share the code with your friends next.",
+  "menu.hint.join": "Enter a code to jump straight into an active lobby.",
 
   "lobby.title": "Lobby",
   "lobby.waiting": "Waiting for players…",
@@ -29,6 +36,8 @@
   "lobby.start": "Start game",
   "lobby.start.hint.needMore": "{n} more players needed",
   "lobby.start.hint.ready": "{n} players ready!",
+  "lobby.next.host": "Next step: pick your mode and start once at least 3 players are in.",
+  "lobby.next.player": "Next step: wait for the host, review settings, and get ready.",
 
   "settings.title": "Settings",
   "settings.mode": "Game mode",
