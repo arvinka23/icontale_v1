@@ -27,7 +27,7 @@ async function fetchSocketToken() {
         if (!res.ok) return '';
         const data = await res.json();
         return typeof data.token === 'string' ? data.token : '';
-    } catch (_) {
+    } catch {
         return '';
     }
 }
@@ -53,6 +53,18 @@ function emitSettings() {
     socket.emit('update-settings', { roomCode: state.roomCode, settings });
 }
 
+function setMenuFeedback(message = '') {
+    const feedback = document.getElementById('menu-feedback');
+    if (!feedback) return;
+    if (!message) {
+        feedback.textContent = '';
+        feedback.classList.add('hidden');
+        return;
+    }
+    feedback.textContent = message;
+    feedback.classList.remove('hidden');
+}
+
 // ── Event Bindings ──────────────────────────────────────────
 
 // Emoji selection
@@ -61,6 +73,17 @@ dom.changeEmoji.onclick = () => randomizeEmoji();
 // Tab switching
 dom.tabCreate.onclick = () => { setTab('create'); playClick(); };
 dom.tabJoin.onclick   = () => { setTab('join');   playClick(); };
+
+const tabButtons = [dom.tabCreate, dom.tabJoin];
+tabButtons.forEach((btn, idx) => {
+    btn.addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+        e.preventDefault();
+        const next = e.key === 'ArrowRight' ? (idx + 1) % tabButtons.length : (idx - 1 + tabButtons.length) % tabButtons.length;
+        tabButtons[next].focus();
+        tabButtons[next].click();
+    });
+});
 
 // Tutorial
 dom.tutorialClose.onclick = hideTutorial;
@@ -181,16 +204,23 @@ document.addEventListener('click', (e) => {
 
 // Menu action (create / join)
 dom.menuActionBtn.onclick = () => {
+    setMenuFeedback('');
     const username = dom.username.value.trim();
     const userEmoji = localStorage.getItem('icontale_user_emoji') || '😀';
 
-    if (!username) return toastError(t('error.usernameRequired'));
+    if (!username) {
+        setMenuFeedback(t('menu.feedback.nameRequired'));
+        return toastError(t('error.usernameRequired'));
+    }
 
     if (dom.tabCreate.classList.contains('active')) {
         socket.emit('create-lobby', { username, emoji: userEmoji });
     } else {
         const roomCode = dom.roomCodeInput.value.trim().toUpperCase();
-        if (roomCode.length !== 6) return toastError(t('error.roomCodeInvalid'));
+        if (roomCode.length !== 6) {
+            setMenuFeedback(t('menu.feedback.roomCodeHint'));
+            return toastError(t('error.roomCodeInvalid'));
+        }
         socket.emit('join-lobby', { username, roomCode, emoji: userEmoji });
     }
     playClick();
@@ -198,7 +228,10 @@ dom.menuActionBtn.onclick = () => {
 
 dom.spectatorBtn.onclick = () => {
     const roomCode = dom.roomCodeInput.value.trim().toUpperCase();
-    if (roomCode.length !== 6) return toastError(t('error.roomCodeInvalid'));
+    if (roomCode.length !== 6) {
+        setMenuFeedback(t('menu.feedback.roomCodeHint'));
+        return toastError(t('error.roomCodeInvalid'));
+    }
     socket.emit('join-spectator', { roomCode });
 };
 
@@ -216,6 +249,19 @@ dom.username.addEventListener('keydown', (e) => {
 dom.roomCodeInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') dom.menuActionBtn.click();
 });
+dom.username.addEventListener('input', () => setMenuFeedback(''));
+dom.roomCodeInput.addEventListener('input', () => {
+    if (!dom.tabJoin.classList.contains('active')) {
+        setMenuFeedback('');
+        return;
+    }
+    const code = dom.roomCodeInput.value.trim().toUpperCase();
+    if (code.length === 0 || code.length === 6) {
+        setMenuFeedback('');
+        return;
+    }
+    setMenuFeedback(t('menu.feedback.roomCodeProgress', { remaining: 6 - code.length }));
+});
 
 // ── Lobby share (copy code / link) ──────────────────────────
 
@@ -225,7 +271,7 @@ async function copyToClipboard(text) {
             await navigator.clipboard.writeText(text);
             return true;
         }
-    } catch (_) { /* fall through to the legacy path */ }
+    } catch { /* fall through to the legacy path */ }
 
     try {
         const ta = document.createElement('textarea');
