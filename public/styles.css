@@ -533,7 +533,7 @@ textarea {
 
 .menu-context-hint {
     max-width: 320px;
-    color: var(--text-muted);
+    color: var(--text);
     font-size: 0.88rem;
     margin-top: calc(-1 * var(--space-xs));
 }
@@ -696,7 +696,7 @@ textarea {
 
 .start-hint {
     font-size: 0.9rem;
-    color: var(--text-muted);
+    color: var(--text);
     max-width: 420px;
 }
 
@@ -1843,6 +1843,13 @@ textarea:focus-visible {
     outline-offset: 2px;
 }
 
+[role='radio']:focus-visible,
+[role='tab']:focus-visible,
+.timeline-dot:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
 @media (prefers-contrast: high) {
     :root {
         --border: oklch(0.50 0 0);
@@ -2081,6 +2088,8 @@ textarea:focus-visible {
     flex-shrink: 0;
     cursor: pointer;
     transition: background 0.2s, transform 0.2s;
+    border: 0;
+    padding: 0;
 }
 
 .replay-timeline .timeline-dot.active {
