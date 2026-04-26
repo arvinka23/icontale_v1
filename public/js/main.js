@@ -271,10 +271,15 @@ if (dom.copyLinkBtn) {
 
 // ── Deeplink (?room=XYZ123) ─────────────────────────────────
 
-(function prefillFromDeeplink() {
+function getDeeplinkRoomCode() {
     const params = new URLSearchParams(window.location.search);
     const candidate = (params.get('room') || '').trim().toUpperCase();
-    if (!/^[A-Z0-9]{6}$/.test(candidate)) return;
+    return /^[A-Z0-9]{6}$/.test(candidate) ? candidate : '';
+}
+
+(function prefillFromDeeplink() {
+    const candidate = getDeeplinkRoomCode();
+    if (!candidate) return;
 
     setTab('join');
     dom.roomCodeInput.value = candidate;
@@ -316,7 +321,9 @@ setTab('create');
 initSettingsUI(emitSettings);
 
 // Show tutorial on first visit
-if (!localStorage.getItem('icontale_tutorial_seen')) {
+const hasTutorialSeen = !!localStorage.getItem('icontale_tutorial_seen');
+const hasDeepLink = !!getDeeplinkRoomCode();
+if (!hasTutorialSeen && !hasDeepLink) {
     showTutorial();
 }
 
