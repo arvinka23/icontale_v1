@@ -1,63 +1,87 @@
 import js from '@eslint/js';
+import globals from 'globals';
+import tsPlugin from '@typescript-eslint/eslint-plugin';
+import tseslint from 'typescript-eslint';
 
 export default [
+    {
+        ignores: ['node_modules/**', 'dist/**', '*.min.css'],
+    },
     js.configs.recommended,
     {
-        files: ['**/*.js', '**/*.ts'],
+        files: ['**/*.ts'],
         languageOptions: {
-            ecmaVersion: 2022,
+            parser: tseslint.parser,
+            ecmaVersion: 'latest',
             sourceType: 'module',
             globals: {
-                console: 'readonly',
-                process: 'readonly',
-                setTimeout: 'readonly',
-                clearTimeout: 'readonly',
-                setInterval: 'readonly',
-                clearInterval: 'readonly',
-                __dirname: 'readonly',
-                URL: 'readonly',
+                ...globals.node,
+            },
+        },
+        plugins: {
+            '@typescript-eslint': tsPlugin,
+        },
+        rules: {
+            'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+            'no-undef': 'off',
+        },
+    },
+    {
+        files: ['**/*.js', '**/*.mjs'],
+        languageOptions: {
+            ecmaVersion: 'latest',
+            sourceType: 'module',
+            globals: {
+                ...globals.node,
             },
         },
         rules: {
             'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-            'no-console': 'off',
-            'prefer-const': 'error',
-            'no-var': 'error',
-            'eqeqeq': ['error', 'always'],
-        },
-    },
-    {
-        files: ['server.ts', 'lib/**/*.ts'],
-        languageOptions: {
-            sourceType: 'module',
-            globals: {
-                require: 'readonly',
-                module: 'readonly',
-                exports: 'readonly',
-                __dirname: 'readonly',
-            },
         },
     },
     {
         files: ['public/**/*.js'],
         languageOptions: {
-            sourceType: 'module',
             globals: {
-                window: 'readonly',
-                document: 'readonly',
-                localStorage: 'readonly',
-                navigator: 'readonly',
-                AudioContext: 'readonly',
-                webkitAudioContext: 'readonly',
+                ...globals.browser,
+                ...globals.serviceworker,
                 io: 'readonly',
-                fetch: 'readonly',
-                caches: 'readonly',
-                self: 'readonly',
-                Response: 'readonly',
             },
         },
     },
     {
-        ignores: ['node_modules/', 'dist/', 'public/sw.js'],
+        files: ['scripts/**/*.js'],
+        languageOptions: {
+            sourceType: 'commonjs',
+            globals: {
+                ...globals.node,
+            },
+        },
+    },
+    {
+        files: ['__tests__/**/*.js', 'vitest.config.js', 'playwright.config.js'],
+        languageOptions: {
+            globals: {
+                ...globals.node,
+                ...globals.es2021,
+                ...globals.mocha,
+                ...globals.browser,
+            },
+        },
+    },
+    {
+        files: ['**/*.d.ts'],
+        plugins: {
+            '@typescript-eslint': tsPlugin,
+        },
+        rules: {
+            'no-unused-vars': 'off',
+        },
+    },
+    {
+        files: ['lib/sanitize.ts'],
+        rules: {
+            'no-control-regex': 'off',
+        },
     },
 ];
