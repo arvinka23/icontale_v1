@@ -2,7 +2,7 @@
 //  Achievement System
 // ═══════════════════════════════════════════════════════════════
 
-import type { Achievement, AchievementContext, PlayerStats, GameMode } from './types';
+import type { Achievement, PlayerStats } from './types';
 import * as store from './store';
 import log from './logger';
 
@@ -103,7 +103,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 
 // ── Achievement Condition Checkers ──────────────────────────
 
-type ConditionFn = (stats: PlayerStats) => boolean;
+type ConditionFn = (_stats: PlayerStats) => boolean;
 
 const CONDITIONS: Record<string, ConditionFn> = {
     'first-game':        (s) => s.gamesPlayed >= 1,
@@ -165,7 +165,7 @@ export async function checkAchievements(
  */
 export async function updateStatsAndCheck(
     playerId: string,
-    updater: (stats: PlayerStats) => void,
+    updater: (_stats: PlayerStats) => void,
     extraChecks?: string[],
 ): Promise<Achievement[]> {
     const stats = await store.getPlayerStats(playerId);

@@ -4,18 +4,18 @@
 
 import type { Server } from 'socket.io';
 import type { Lobby } from './types';
-import { processRoundResults, calculateTeamScores } from './scoring';
+import { processRoundResults } from './scoring';
 import { recordEvent } from './replay';
 import log from './logger';
 
 // ── Dependencies injected by the server ─────────────────────
 
 export interface GameFlowDeps {
-    getLobby: (code: string) => Lobby | null;
+    getLobby: (_code: string) => Lobby | null;
     io: Server;
-    saveLobby: (code: string, lobby: Lobby) => Promise<void>;
-    clearLobbyTimers: (lobby: Lobby) => void;
-    getRandomEmojis: (count: number, packs: string[]) => string[];
+    saveLobby: (_code: string, _lobby: Lobby) => Promise<void>;
+    clearLobbyTimers: (_lobby: Lobby) => void;
+    getRandomEmojis: (_count: number, _packs: string[]) => string[];
 }
 
 // ── startRound ──────────────────────────────────────────────
