@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { EMOJIS, EMOJI_NAMES } from './constants.js';
-import { state, Phase, setPhase, forcePhase, resetGameState } from './state.js';
+import { state, Phase, setPhase, forcePhase } from './state.js';
 import { dom, hideAllSections, formatTime, typeText } from './dom.js';
 import { playClick, playSuccess, playTick } from './sounds.js';
 import { enhanceRadioGroup } from './radio-nav.js';
