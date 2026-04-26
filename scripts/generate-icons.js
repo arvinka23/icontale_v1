@@ -82,7 +82,6 @@ function createIcon512() {
 
 function createIconMaskable() {
   const size = 512;
-  const safeZone = 0.8;
   const canvas = createCanvas(size, size);
   const ctx = canvas.getContext('2d');
 
@@ -95,7 +94,6 @@ function createIconMaskable() {
   ctx.fillStyle = gradient;
   ctx.fill();
 
-  const contentSize = size * safeZone;
   const centerX = size / 2;
   const centerY = size / 2;
 

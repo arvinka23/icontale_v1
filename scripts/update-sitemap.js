@@ -22,7 +22,7 @@ const SITEMAP = path.join(__dirname, '..', 'public', 'sitemap.xml');
 function getCommitDate() {
     try {
         return execSync('git log -1 --format=%cs', { encoding: 'utf8' }).trim();
-    } catch (_) {
+    } catch {
         return new Date().toISOString().slice(0, 10);
     }
 }
