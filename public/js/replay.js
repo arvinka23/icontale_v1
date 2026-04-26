@@ -46,9 +46,22 @@ export async function openReplay(replayId) {
         // Build timeline dots
         timeline.innerHTML = '';
         events.forEach((_, i) => {
-            const dot = document.createElement('div');
+            const dot = document.createElement('button');
             dot.className = 'timeline-dot' + (i === 0 ? ' active' : '');
+            dot.type = 'button';
+            dot.setAttribute('role', 'listitem');
+            dot.setAttribute('aria-label', `Replay event ${i + 1} von ${events.length}`);
+            dot.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
             dot.addEventListener('click', () => goTo(i));
+            dot.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    goTo(i + 1);
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    goTo(i - 1);
+                }
+            });
             timeline.appendChild(dot);
         });
 
@@ -80,6 +93,7 @@ function renderEvent() {
     const dots = timeline.querySelectorAll('.timeline-dot');
     dots.forEach((dot, i) => {
         dot.classList.toggle('active', i === currentIdx);
+        dot.setAttribute('aria-pressed', i === currentIdx ? 'true' : 'false');
     });
 }
 
