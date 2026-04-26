@@ -71,13 +71,13 @@ function formatSample(metric: MetricBase): string {
 }
 
 export interface Counter {
-    inc(labels?: LabelMap, amount?: number): void;
+    inc(_labels?: LabelMap, _amount?: number): void;
 }
 
 export interface Gauge {
-    set(value: number, labels?: LabelMap): void;
-    inc(labels?: LabelMap, amount?: number): void;
-    dec(labels?: LabelMap, amount?: number): void;
+    set(_value: number, _labels?: LabelMap): void;
+    inc(_labels?: LabelMap, _amount?: number): void;
+    dec(_labels?: LabelMap, _amount?: number): void;
 }
 
 export function registerCounter(

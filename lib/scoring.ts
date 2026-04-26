@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import type {
-    Lobby, Player, Guess, ResultEntry, LeaderboardDetail,
+    Lobby, ResultEntry, LeaderboardDetail,
     PointDetail, PointConfig,
 } from './types';
 
