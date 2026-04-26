@@ -83,13 +83,11 @@
     
 
     <!-- Styles -->
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.min.css">
 
     <!-- Theme pre-paint (sets data-theme before first paint) -->
     <script src="/js/theme-preload.js"></script>
 
-    <!-- Socket.io -->
-    <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
     <noscript>
@@ -526,6 +524,7 @@
         </div>
     </div>
 
+    <script src="/socket.io/socket.io.js" defer></script>
     <script type="module" src="js/main.js"></script>
     <script src="js/sw-register.js" defer></script>
 </body>
