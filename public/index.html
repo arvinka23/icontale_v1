@@ -134,6 +134,7 @@
         <header class="game-header">
             <h1>IconTale</h1>
             <p class="game-subtitle" data-i18n="app.subtitle">Kreative Geschichten mit Emojis!</p>
+            <p class="game-lead" data-i18n="app.lead">Schreibe in 60 Sekunden eine Emoji-Story, rate die anderen und sammle Punkte.</p>
             <div class="header-tools">
                 <button id="language-toggle" class="icon-btn" type="button" data-i18n-attr="aria-label:language.switch, title:language.switch">🌐</button>
                 <button id="theme-toggle" class="icon-btn" type="button" data-i18n-attr="aria-label:theme.toggle, title:theme.toggle">🌙</button>
@@ -145,6 +146,14 @@
 
             <!-- ── Hauptmenü ─────────────────────────────── -->
             <section id="main-menu" class="menu-section" aria-label="Hauptmenü">
+                <div class="quickstart-card" aria-live="polite">
+                    <h2 class="quickstart-title" data-i18n="menu.quickstart.title">Schnellstart</h2>
+                    <ol class="quickstart-list">
+                        <li data-i18n="menu.quickstart.step1">Namen eingeben und Emoji wählen.</li>
+                        <li data-i18n="menu.quickstart.step2">Lobby erstellen oder mit Code beitreten.</li>
+                        <li data-i18n="menu.quickstart.step3">Story schreiben, raten, Punkte sammeln.</li>
+                    </ol>
+                </div>
                 <div class="tabs" role="tablist" aria-label="Lobby">
                     <button id="tab-create" class="tab active" role="tab" aria-selected="true" aria-controls="main-menu">
                         <span class="tab-icon">✨</span> <span data-i18n="menu.tab.create">Lobby erstellen</span>
@@ -170,6 +179,7 @@
                         <label for="room-code-input" class="input-label" data-i18n="menu.roomCode.label">Lobby-Code</label>
                         <input type="text" id="room-code-input" data-i18n-placeholder="menu.roomCode.placeholder" placeholder="6-stelliger Code" maxlength="6" pattern="[A-Za-z0-9]{6}" autocomplete="off">
                     </div>
+                    <p id="menu-context-hint" class="menu-context-hint" data-i18n="menu.hint.create">Du bist Host: Teile danach den Code mit deinen Freunden.</p>
                     <button id="menu-action-btn" class="primary-btn">
                         <span class="btn-icon">🚀</span> <span data-i18n="menu.action.create">Lobby erstellen</span>
                     </button>
@@ -192,6 +202,7 @@
                         </button>
                     </div>
                     <p class="lobby-subtitle" data-i18n="lobby.waiting">Warte auf Spieler...</p>
+                    <p id="lobby-next-step" class="lobby-next-step" data-i18n="lobby.next.host">Nächster Schritt: Stelle den Modus ein und starte bei mindestens 3 Spielern.</p>
                     <div id="spectator-count" class="spectator-count hidden" aria-live="polite">
                         <span class="btn-icon">👁️</span> <span id="spectator-num">0</span> <span id="spectator-label">Zuschauer</span>
                     </div>

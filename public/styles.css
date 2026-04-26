@@ -353,6 +353,13 @@ textarea {
     margin-top: var(--space-xs);
 }
 
+.game-lead {
+    margin: var(--space-sm) auto 0;
+    max-width: 620px;
+    font-size: 0.96rem;
+    color: var(--text);
+}
+
 .header-tools {
     position: absolute;
     top: var(--space-lg);
@@ -501,6 +508,36 @@ textarea {
     gap: var(--space-md);
 }
 
+.quickstart-card {
+    margin-bottom: var(--space-lg);
+    text-align: left;
+    padding: var(--space-md);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-dark);
+}
+
+.quickstart-title {
+    font-size: 1rem;
+    margin-bottom: var(--space-xs);
+}
+
+.quickstart-list {
+    margin-left: 1.1rem;
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.9rem;
+}
+
+.menu-context-hint {
+    max-width: 320px;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    margin-top: calc(-1 * var(--space-xs));
+}
+
 .input-group {
     display: flex;
     flex-direction: column;
@@ -549,6 +586,12 @@ textarea {
     color: var(--text-muted);
     font-size: 1rem;
     margin-top: var(--space-xs);
+}
+
+.lobby-next-step {
+    margin-top: var(--space-xs);
+    font-size: 0.9rem;
+    color: var(--text);
 }
 
 .room-code {
@@ -654,6 +697,7 @@ textarea {
 .start-hint {
     font-size: 0.9rem;
     color: var(--text-muted);
+    max-width: 420px;
 }
 
 
@@ -1695,6 +1739,22 @@ textarea {
         flex-direction: column;
     }
 
+    #menu-action-btn,
+    #spectator-btn,
+    .tab,
+    .lobby-share-btn {
+        min-height: 44px;
+    }
+
+    .game-lead {
+        font-size: 0.9rem;
+        max-width: 100%;
+    }
+
+    .quickstart-card {
+        padding: var(--space-sm) var(--space-md);
+    }
+
     .tab {
         border-radius: var(--radius-sm);
     }
@@ -1730,6 +1790,19 @@ textarea {
     }
 
     h1 { font-size: 1.8rem; }
+
+    .game-subtitle {
+        font-size: 1rem;
+    }
+
+    .quickstart-list {
+        font-size: 0.85rem;
+    }
+
+    .menu-context-hint,
+    .lobby-next-step {
+        font-size: 0.84rem;
+    }
 
     .lobby-players-grid {
         grid-template-columns: repeat(2, 1fr);

@@ -6,6 +6,7 @@
   },
   "app.title": "IconTale – Kreatives Storytelling-Spiel",
   "app.subtitle": "Kreative Geschichten mit Emojis!",
+  "app.lead": "In 3 Schritten zum Spiel: Story schreiben, Autor erraten, Punkte holen.",
 
   "menu.tab.create": "Lobby erstellen",
   "menu.tab.join": "Lobby beitreten",
@@ -17,6 +18,12 @@
   "menu.action.join": "Lobby beitreten",
   "menu.action.spectate": "Als Zuschauer beitreten",
   "menu.emoji.change": "Emoji wechseln",
+  "menu.quickstart.title": "Schnellstart",
+  "menu.quickstart.step1": "Namen eingeben und Emoji wählen.",
+  "menu.quickstart.step2": "Lobby erstellen oder mit Code beitreten.",
+  "menu.quickstart.step3": "Story schreiben, raten, Punkte sammeln.",
+  "menu.hint.create": "Du bist Host: Teile danach den Code mit deinen Freunden.",
+  "menu.hint.join": "Code eingeben und direkt einer laufenden Lobby beitreten.",
 
   "lobby.title": "Lobby",
   "lobby.waiting": "Warte auf Spieler…",
@@ -29,6 +36,8 @@
   "lobby.start": "Spiel starten",
   "lobby.start.hint.needMore": "Noch {n} Spieler nötig",
   "lobby.start.hint.ready": "{n} Spieler bereit!",
+  "lobby.next.host": "Nächster Schritt: Stelle den Modus ein und starte bei mindestens 3 Spielern.",
+  "lobby.next.player": "Nächster Schritt: Warte auf den Host, lies die Regeln und mach dich bereit.",
 
   "settings.title": "Einstellungen",
   "settings.mode": "Spielmodus",
