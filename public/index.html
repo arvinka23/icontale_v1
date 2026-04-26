@@ -437,7 +437,7 @@
     <!-- ── Anleitung ──────────────────────────────────────── -->
     <div id="tutorial-modal" class="tutorial-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="tutorial-heading">
         <div class="tutorial-content">
-            <button id="tutorial-close" class="tutorial-close" data-i18n-attr="aria-label:tutorial.close">&times;</button>
+            <button id="tutorial-close" class="tutorial-close" type="button" data-i18n-attr="aria-label:tutorial.close">&times;</button>
             <h2 id="tutorial-heading" data-i18n="tutorial.title">Willkommen bei IconTale!</h2>
             <div class="tutorial-steps">
                 <div class="tutorial-step">
@@ -490,7 +490,7 @@
                     </div>
                 </div>
             </div>
-            <button id="tutorial-start-btn" class="primary-btn tutorial-start-btn" data-i18n="tutorial.ok">Verstanden!</button>
+            <button id="tutorial-start-btn" class="primary-btn tutorial-start-btn" type="button" data-i18n="tutorial.ok">Verstanden!</button>
         </div>
     </div>
 
@@ -512,16 +512,16 @@
     </div>
 
     <!-- Replay Viewer Modal -->
-    <div id="replay-modal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Replay Viewer">
+    <div id="replay-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="replay-heading" aria-describedby="replay-counter">
         <div class="modal-content replay-viewer">
-            <button class="modal-close" id="replay-close" aria-label="Schliessen">&times;</button>
-            <h2>🎬 Replay</h2>
-            <div id="replay-timeline" class="replay-timeline"></div>
-            <div id="replay-content" class="replay-content"></div>
+            <button class="modal-close" id="replay-close" type="button" aria-label="Schliessen">&times;</button>
+            <h2 id="replay-heading">🎬 Replay</h2>
+            <div id="replay-timeline" class="replay-timeline" role="list" aria-label="Replay Timeline"></div>
+            <div id="replay-content" class="replay-content" role="region" aria-label="Replay Event Details"></div>
             <div class="replay-controls">
-                <button id="replay-prev" class="btn btn-sm">⏮ Zurück</button>
-                <span id="replay-counter" class="replay-counter">0 / 0</span>
-                <button id="replay-next" class="btn btn-sm">Weiter ⏭</button>
+                <button id="replay-prev" class="btn btn-sm" type="button">⏮ Zurück</button>
+                <span id="replay-counter" class="replay-counter" aria-live="polite">0 / 0</span>
+                <button id="replay-next" class="btn btn-sm" type="button">Weiter ⏭</button>
             </div>
         </div>
     </div>
