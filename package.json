@@ -18,6 +18,8 @@
     "build:assets": "node scripts/build-assets.js",
     "build:sitemap": "node scripts/update-sitemap.js",
     "build:icons": "node scripts/generate-icons.js",
+    "perf:lighthouse": "node scripts/lighthouse-runner.js",
+    "perf:lighthouse:ci": "node scripts/lighthouse-runner.js --ci",
     "audit": "npm audit --audit-level=high",
     "docker:build": "docker build -t icontale .",
     "docker:run": "docker run -p 3000:3000 icontale"
@@ -68,6 +70,7 @@
     "eslint-config-prettier": "^10.0.1",
     "globals": "^17.5.0",
     "husky": "^9.1.7",
+    "lighthouse": "^12.8.2",
     "lint-staged": "^16.4.0",
     "nodemon": "^3.0.1",
     "prettier": "^3.5.2",

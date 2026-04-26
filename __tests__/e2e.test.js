@@ -401,7 +401,7 @@ describe('E2E Game Flow Tests', () => {
 
             await playRound();
             host.emit('leaderboard-phase', { roomCode });
-            const lb1 = await waitForEvent(host, 'leaderboard-phase');
+            await waitForEvent(host, 'leaderboard-phase');
             host.emit('next-round', { roomCode });
 
             roundData = await waitForEvent(host, 'round-started');

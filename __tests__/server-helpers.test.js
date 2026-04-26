@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 // We can't import server.ts directly (it starts a listener),
 // so we test the logic patterns used in server.ts.

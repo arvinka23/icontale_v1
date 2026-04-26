@@ -33,13 +33,11 @@ export {
 export interface ClientSocket {
     id?: string;
     connected: boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     on(event: string, handler: (...args: any[]) => void): void;
     emit(event: string, ...args: unknown[]): void;
     connect(): void;
     disconnect(): void;
     io: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         on(event: string, handler: (...args: any[]) => void): void;
     };
 }

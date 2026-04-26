@@ -152,6 +152,20 @@ cp .env.example .env
 | `PORT` | `3000` | Server port |
 | `NODE_ENV` | `development` | `development` or `production` |
 | `LOG_LEVEL` | `debug` | Pino log level |
+| `ALLOWED_ORIGINS` | `*` (dev) | Comma-separated allowed origins; must be explicit in production |
+| `SOCKET_AUTH_SECRET` | _(empty)_ | 16+ char secret for socket handshake token signing (required in production) |
+| `REDIS_URL` | `redis://localhost:6379` | Redis connection for persistence (recommended in production) |
+
+### Production Environment Checklist (Render)
+
+Set these before deploying:
+
+- `NODE_ENV=production`
+- `ALLOWED_ORIGINS=https://icontale.onrender.com` (plus custom domain if used)
+- `SOCKET_AUTH_SECRET=<16+ random chars>`
+- Optional but recommended: `REDIS_URL=<managed redis url>`
+
+If `ALLOWED_ORIGINS` or `SOCKET_AUTH_SECRET` is missing in production, the server intentionally fails fast to prevent insecure startup.
 
 ### Run in Development
 
@@ -183,6 +197,8 @@ NODE_ENV=production npm start
 | `npm run format` | Format with Prettier |
 | `npm run build:css` | Minify CSS for production |
 | `npm run build:icons` | Generate PNG icons from canvas |
+| `npm run perf:lighthouse` | Run repeatable Lighthouse mobile+desktop audits and save JSON/Markdown summaries to `artifacts/lighthouse/` |
+| `npm run perf:lighthouse:ci` | Same as above, but fails on threshold misses (CI mode) |
 | `npm run audit` | Security audit |
 
 ---
@@ -225,7 +241,8 @@ icontale_v1/
 │   └── replay.ts              # Game recording & replay retrieval
 ├── dist/                      # Compiled JavaScript (git-ignored)
 ├── scripts/
-│   └── generate-icons.js      # PNG icon generator (canvas)
+│   ├── generate-icons.js      # PNG icon generator (canvas)
+│   └── lighthouse-runner.js   # Repeatable Lighthouse runner + summary generator
 ├── public/
 │   ├── index.html             # Single-page application
 │   ├── styles.css             # OKLCH design system, responsive

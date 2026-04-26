@@ -2,7 +2,6 @@
 //  IconTale — Server
 // ═══════════════════════════════════════════════════════════════
 
-/* eslint-disable @typescript-eslint/no-require-imports */
 require('dotenv').config();
 
 // Sentry must initialise before any instrumentation hooks can be
@@ -47,7 +46,6 @@ import {
 
 import type {
     Lobby,
-    Player,
     GameSettings,
     DisconnectedSession,
     Guess,
@@ -225,11 +223,6 @@ const metricSocketEvents = registerCounter(
     'icontale_socket_events_total',
     'Accepted Socket.io events by name',
     ['event']
-);
-const metricSocketErrors = registerCounter(
-    'icontale_socket_errors_total',
-    'Socket.io events rejected by the middleware, by reason',
-    ['reason']
 );
 const metricLobbyEvents = registerCounter(
     'icontale_lobby_events_total',
@@ -442,19 +435,6 @@ function generateRoomCode(): string {
 
 function getLobby(code: string): Lobby | null {
     return lobbies[code] ?? null;
-}
-
-function findLobbyBySocket(
-    socketId: string
-): { code: string; lobby: Lobby; role: 'player' | 'spectator' } | null {
-    for (const code in lobbies) {
-        const lobby = lobbies[code]!;
-        if (lobby.players.some((p) => p.id === socketId))
-            return { code, lobby, role: 'player' };
-        if (lobby.spectators.some((s) => s.id === socketId))
-            return { code, lobby, role: 'spectator' };
-    }
-    return null;
 }
 
 // ── In-memory lobbies ───────────────────────────────────────

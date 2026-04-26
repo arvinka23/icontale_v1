@@ -24,6 +24,9 @@
   "menu.quickstart.step3": "Story schreiben, raten, Punkte sammeln.",
   "menu.hint.create": "Du bist Host: Teile danach den Code mit deinen Freunden.",
   "menu.hint.join": "Code eingeben und direkt einer laufenden Lobby beitreten.",
+  "menu.feedback.nameRequired": "Gib zuerst deinen Namen ein und erstelle dann eine Lobby oder tritt bei.",
+  "menu.feedback.roomCodeHint": "Lobby-Codes bestehen aus genau 6 Buchstaben/Zahlen.",
+  "menu.feedback.roomCodeProgress": "Noch {remaining} Zeichen bis zum gültigen Lobby-Code.",
 
   "lobby.title": "Lobby",
   "lobby.waiting": "Warte auf Spieler…",
@@ -109,6 +112,12 @@
   "info.playerReconnected": "{name} ist wieder verbunden.",
   "info.serverShutdown": "Server wird neu gestartet…",
   "info.lobbyClosed": "Lobby wurde geschlossen.",
+  "connection.banner.reconnecting": "Verbindung verloren. Wir versuchen automatisch, dich wieder zu verbinden…",
+  "connection.banner.reconnected": "Verbindung wieder da. Du kannst normal weiterspielen.",
+  "connection.banner.waitingPhase": "Reconnect erfolgreich. Warte auf die nächste Spielphase.",
+  "connection.banner.reconnectFailed": "Reconnect fehlgeschlagen. Bitte lade die Seite neu und tritt der Lobby erneut bei.",
+  "connection.banner.serverDisconnect": "Der Server hat die Verbindung getrennt. Bitte Seite neu laden.",
+  "connection.banner.serverUnreachable": "Server aktuell nicht erreichbar. Prüfe Verbindung und versuche es erneut.",
 
   "theme.toggle": "Theme wechseln",
   "theme.auto": "Theme: automatisch ({resolved})",

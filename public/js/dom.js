@@ -102,6 +102,7 @@ const $ = (id) => /** @type {T} */ (document.getElementById(id));
  *   tutorialClose: HTMLButtonElement,
  *   tutorialStart: HTMLButtonElement,
  *   loadingOverlay: HTMLElement,
+ *   connectionStatus: HTMLElement,
  * }}
  */
 export const dom = {
@@ -202,6 +203,7 @@ export const dom = {
     tutorialClose:  $('tutorial-close'),
     tutorialStart:  $('tutorial-start-btn'),
     loadingOverlay: $('loading-overlay'),
+    connectionStatus: $('connection-status'),
 };
 
 // ── Utility functions ───────────────────────────────────────

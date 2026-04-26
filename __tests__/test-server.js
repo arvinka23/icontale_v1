@@ -224,7 +224,7 @@ export function createTestServer(options = {}) {
     });
 
     io.on('connection', (socket) => {
-        socket.use(([event], next) => {
+        socket.use(([_event], next) => {
             if (!checkSocketRate(socket.id)) {
                 return next(new Error('Rate limited'));
             }
@@ -283,7 +283,7 @@ export function createTestServer(options = {}) {
                     settings: merged,
                 });
                 io.to(roomCode).emit('players-update', lobbies[roomCode].players);
-            } catch (err) {
+            } catch {
                 socket.emit('lobby-error', { message: 'Internal error creating lobby.' });
             }
         });
@@ -322,7 +322,7 @@ export function createTestServer(options = {}) {
                     settings: lobby.settings,
                 });
                 io.to(cResult.value).emit('players-update', lobby.players);
-            } catch (err) {
+            } catch {
                 socket.emit('lobby-error', { message: 'Internal error joining lobby.' });
             }
         });
@@ -349,7 +349,7 @@ export function createTestServer(options = {}) {
                     totalRounds: lobby.settings.rounds,
                 });
                 io.to(cResult.value).emit('spectators-update', lobby.spectators);
-            } catch (err) {
+            } catch {
                 socket.emit('lobby-error', { message: 'Internal error joining as spectator.' });
             }
         });
@@ -368,7 +368,7 @@ export function createTestServer(options = {}) {
                 }
                 lobby.lastActivity = Date.now();
                 io.to(roomCode ?? '').emit('settings-update', lobby.settings);
-            } catch (err) {
+            } catch {
                 // ignore
             }
         });
@@ -400,7 +400,7 @@ export function createTestServer(options = {}) {
                 }
 
                 startRound(roomCode ?? '');
-            } catch (err) {
+            } catch {
                 // ignore
             }
         });
@@ -429,7 +429,7 @@ export function createTestServer(options = {}) {
                     clearLobbyTimers(lobby);
                     startGuessingPhase(roomCode ?? '');
                 }
-            } catch (err) {
+            } catch {
                 // ignore
             }
         });
@@ -453,7 +453,7 @@ export function createTestServer(options = {}) {
                 if (Object.keys(lobby.guesses).length === lobby.players.length) {
                     processResults(roomCode ?? '');
                 }
-            } catch (err) {
+            } catch {
                 // ignore
             }
         });
@@ -478,7 +478,7 @@ export function createTestServer(options = {}) {
                 }
                 lobby.resultsState = { currentChatIdx, currentMsgStep };
                 io.to(roomCode ?? '').emit('results-progress', lobby.resultsState);
-            } catch (err) {
+            } catch {
                 // ignore
             }
         });
@@ -500,7 +500,7 @@ export function createTestServer(options = {}) {
                     totalRounds: lobby.settings.rounds,
                     totalScores: lobby.totalScores,
                 });
-            } catch (err) {
+            } catch {
                 // ignore
             }
         });
@@ -533,7 +533,7 @@ export function createTestServer(options = {}) {
                         replayId: null,
                     });
                 }
-            } catch (err) {
+            } catch {
                 // ignore
             }
         });
@@ -563,7 +563,7 @@ export function createTestServer(options = {}) {
                     players: lobby.players,
                     settings: lobby.settings,
                 });
-            } catch (err) {
+            } catch {
                 // ignore
             }
         });

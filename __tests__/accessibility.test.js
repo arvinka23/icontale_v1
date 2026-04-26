@@ -18,6 +18,9 @@ describe('accessibility baseline', () => {
         expect(html).toContain('aria-describedby="replay-counter"');
         expect(html).toContain('id="replay-timeline" class="replay-timeline" role="list"');
         expect(html).toContain('id="replay-counter" class="replay-counter" aria-live="polite"');
+        expect(html).toContain('id="menu-feedback"');
+        expect(html).toContain('aria-live="polite"');
+        expect(html).toContain('id="connection-status"');
     });
 
     it('uses semantic, keyboard-accessible timeline controls in replay.js', () => {
@@ -26,6 +29,14 @@ describe('accessibility baseline', () => {
         expect(replayJs).toContain("dot.type = 'button'");
         expect(replayJs).toContain("e.key === 'ArrowRight'");
         expect(replayJs).toContain("e.key === 'ArrowLeft'");
+    });
+
+    it('supports keyboard tab switching in main menu flow', () => {
+        const mainJs = readProjectFile('public', 'js', 'main.js');
+        expect(mainJs).toContain("btn.addEventListener('keydown'");
+        expect(mainJs).toContain("e.key !== 'ArrowRight' && e.key !== 'ArrowLeft'");
+        expect(mainJs).toContain('tabButtons[next].click()');
+        expect(mainJs).toContain('menu.feedback.roomCodeProgress');
     });
 
     it('exposes visible focus styles for key interactive roles', () => {

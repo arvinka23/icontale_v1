@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import crypto from 'crypto';
-import type { Lobby, Replay, ReplayEvent, ReplayEventType, Player, GameSettings } from './types';
+import type { Lobby, Replay, ReplayEvent, ReplayEventType, Player } from './types';
 import * as store from './store';
 import log from './logger';
 

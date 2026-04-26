@@ -90,7 +90,7 @@ export function activateFocusTrap(container, opts = {}) {
         release() {
             container.removeEventListener('keydown', onKeydown);
             if (previouslyFocused instanceof HTMLElement) {
-                try { previouslyFocused.focus(); } catch (_) { /* detached node */ }
+                try { previouslyFocused.focus(); } catch { /* detached node */ }
             }
         },
     };

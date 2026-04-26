@@ -1,0 +1,30 @@
+[
+  {
+    "label": "Mobile",
+    "scores": {
+      "performance": 91,
+      "accessibility": 91,
+      "best-practices": 100,
+      "seo": 100
+    },
+    "cwv": {
+      "lcp": "3.2 s",
+      "cls": "0",
+      "inp": "n/a"
+    }
+  },
+  {
+    "label": "Desktop",
+    "scores": {
+      "performance": 98,
+      "accessibility": 91,
+      "best-practices": 100,
+      "seo": 100
+    },
+    "cwv": {
+      "lcp": "0.7 s",
+      "cls": "0",
+      "inp": "n/a"
+    }
+  }
+]

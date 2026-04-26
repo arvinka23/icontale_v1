@@ -13,7 +13,7 @@
                 ? 'dark'
                 : 'light');
         document.documentElement.setAttribute('data-theme', resolved);
-    } catch (_) {
+    } catch {
         // localStorage blocked (privacy mode, etc.) — fall back to
         // the CSS default theme.
     }
