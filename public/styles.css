@@ -1245,6 +1245,10 @@ textarea {
     pointer-events: none;
 }
 
+.leaderboard-tooltip.visible {
+    display: block;
+}
+
 .leaderboard-tooltip div {
     padding: 2px 0;
 }
