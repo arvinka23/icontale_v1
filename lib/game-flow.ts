@@ -93,9 +93,7 @@ export function startGuessingPhase(roomCode: string, deps: GameFlowDeps): void {
 
     if (playerIds.length < 2) {
         log.warn({ roomCode }, 'Not enough active players for guessing phase');
-        deps.io.to(roomCode).emit('lobby-error', {
-            message: 'Nicht genug aktive Spieler.',
-        });
+        deps.io.to(roomCode).emit('lobby-error', { code: 'error.notEnoughPlayers' });
         return;
     }
 
