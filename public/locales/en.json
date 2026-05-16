@@ -104,6 +104,14 @@
   "error.connectionLost": "Connection lost — trying to reconnect…",
   "error.disconnectedByServer": "Disconnected by the server.",
   "error.reconnectFailed": "Reconnect failed. Please reload the page.",
+  "error.serverFull": "Server is full. Please try again later.",
+  "error.createLobbyFailed": "Internal error creating lobby.",
+  "error.lobbyNotFound": "Lobby not found.",
+  "error.gameAlreadyStarted": "Game already started.",
+  "error.lobbyFull": "Lobby is full (max {n} players).",
+  "error.nameTaken": "This name is already taken.",
+  "error.joinLobbyFailed": "Internal error joining lobby.",
+  "error.notEnoughPlayers": "At least 3 players required.",
 
   "info.reconnected": "Connection restored.",
   "info.reconnectedWaitingPhase": "Connection restored. Waiting for the next phase…",
@@ -118,6 +126,13 @@
   "connection.banner.reconnectFailed": "Reconnect failed. Please reload and rejoin the lobby.",
   "connection.banner.serverDisconnect": "The server closed the connection. Please reload the page.",
   "connection.banner.serverUnreachable": "Server unreachable right now. Check your connection and try again.",
+
+  "spectator.gameRunning": "Game running — Round {current}/{total}",
+  "spectator.lobbyWaiting": "Lobby {code} — Waiting for game start...",
+  "spectator.writingPhase": "Writing phase — Round {current}/{total} ({mode})",
+  "spectator.guessingPhase": "Guessing phase running...",
+
+  "achievement.unlocked": "Achievement unlocked!",
 
   "theme.toggle": "Toggle theme",
   "theme.auto": "Theme: automatic ({resolved})",
