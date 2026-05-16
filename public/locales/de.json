@@ -104,6 +104,14 @@
   "error.connectionLost": "Verbindung verloren — versuche neu zu verbinden…",
   "error.disconnectedByServer": "Verbindung vom Server getrennt.",
   "error.reconnectFailed": "Verbindung fehlgeschlagen. Bitte Seite neu laden.",
+  "error.serverFull": "Server ist voll. Bitte später erneut versuchen.",
+  "error.createLobbyFailed": "Interner Fehler beim Erstellen der Lobby.",
+  "error.lobbyNotFound": "Lobby nicht gefunden.",
+  "error.gameAlreadyStarted": "Spiel bereits gestartet.",
+  "error.lobbyFull": "Lobby ist voll (max {n} Spieler).",
+  "error.nameTaken": "Dieser Name ist bereits vergeben.",
+  "error.joinLobbyFailed": "Interner Fehler beim Beitreten.",
+  "error.notEnoughPlayers": "Mindestens 3 Spieler nötig.",
 
   "info.reconnected": "Verbindung wiederhergestellt.",
   "info.reconnectedWaitingPhase": "Verbindung wiederhergestellt. Warte auf die nächste Phase…",
@@ -118,6 +126,13 @@
   "connection.banner.reconnectFailed": "Reconnect fehlgeschlagen. Bitte lade die Seite neu und tritt der Lobby erneut bei.",
   "connection.banner.serverDisconnect": "Der Server hat die Verbindung getrennt. Bitte Seite neu laden.",
   "connection.banner.serverUnreachable": "Server aktuell nicht erreichbar. Prüfe Verbindung und versuche es erneut.",
+
+  "spectator.gameRunning": "Spiel läuft — Runde {current}/{total}",
+  "spectator.lobbyWaiting": "Lobby {code} — Warte auf Spielstart...",
+  "spectator.writingPhase": "Schreibphase — Runde {current}/{total} ({mode})",
+  "spectator.guessingPhase": "Ratephase läuft...",
+
+  "achievement.unlocked": "Achievement freigeschaltet!",
 
   "theme.toggle": "Theme wechseln",
   "theme.auto": "Theme: automatisch ({resolved})",
