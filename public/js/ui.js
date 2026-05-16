@@ -705,9 +705,8 @@ function renderLeaderboardTable(table, leaderboard, details, players) {
                 ];
                 tooltip.innerHTML = tips.length ? tips.map(t => `<div>${t}</div>`).join('') : 'Keine Punkte';
                 tdPoints.appendChild(tooltip);
-                tdPoints.style.cursor = 'pointer';
-                tdPoints.onmouseenter = () => { tooltip.style.display = 'block'; };
-                tdPoints.onmouseleave = () => { tooltip.style.display = 'none'; };
+                tdPoints.onmouseenter = () => { tooltip.classList.add('visible'); };
+                tdPoints.onmouseleave = () => { tooltip.classList.remove('visible'); };
             }
         }
 
